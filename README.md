@@ -33,7 +33,7 @@ Extra controls:
 
 | Control | What it does |
 |---|---|
-| **Next generation** | Runs one generation. The eaten get a red bird outline (a red fish on Squirts) and the randomly killed get a yellow skull and crossbones. After 1.5 s the survivors' children replace the grid. |
+| **Next generation** | Runs one generation. A red finch (a red perch on Squirts) flies or swims to each creature the predator eats, and a black skull stamp slams down on each one that dies at random. After about 6 to 7 seconds the survivors' children replace the grid; the controls are locked until then. With your system's reduced-motion setting on, there is no flight and no slam: the finch or perch marks and the skull stamps appear at once, and the children arrive after about 1.5 seconds. |
 | **N** (number box, default 10) | How many generations **Run N generations** runs. |
 | **Run N generations** | Runs N generations at once with no marks, then shows the result. |
 | **Reset** | Starts over with a new random background, a new random population, and generation 0. |

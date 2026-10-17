@@ -3,9 +3,9 @@
 // Needs predator-svgs.js loaded first (window.PREDATOR_SVGS). No colors on creatures/background are changed;
 // it only animates transform/opacity of the creature <svg> and the .mark overlay inside eaten cells.
 (function () {
-  const T = { entry: 300, hop: 240, grab: 60, exit: 260, gulp: 150 };   // ms; total for 8 targets ~2.7 s
+  const T = { entry: 600, hop: 480, grab: 120, exit: 520, gulp: 300 };   // ms; total for 8 targets 5.44 s (John: ~2x slower)
   const SWOOP = [0.45, 0, 0.2, 1];          // cubic-bezier for each hop (ease-in-out, quick swoop)
-  const FRAME = { bird: 80, fish: 100 };     // frame swap period (ms)
+  const FRAME = { bird: 110, fish: 140 };    // frame swap period (ms), slowed with the run
   const CYCLE = { bird: ['f1', 'f2', 'f3', 'f2'], fish: ['f1', 'f2', 'f3', 'f2'] };
   const MOUTH = window.PREDATOR_ANCHORS || { bird: [74, 36.5], fish: [8, 41] }; // beak tip / mouth in the 80x80 viewBox (from predator-svgs.js)
   const FACES = { bird: 1, fish: -1 };       // +1 = drawn facing right, -1 = facing left

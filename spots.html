@@ -13,7 +13,7 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <link rel="stylesheet" href="design/mobile.css"></head><body>
 <h2>Natural Selection: Camouflage (Spots)</h2>
 <div class="controls">
-<button id="step" title="Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.">Next generation</button>
+<button id="step" title="Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.">Next generation</button>
 <input id="n" title="How many generations &quot;Run N generations&quot; will run. Ten by default." type="number" value="10" min="1">
 <button id="multi" title="Run the number of generations in the box at once, with no marks, and show only the result.">Run N generations</button>
 <button id="reset" title="Start over with a new random background, a new random population, and generation 0.">Reset</button>
@@ -76,10 +76,10 @@ function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b])-dist(pop[
  for(let k=0;k<s.length;k+=2){const a=s[k],b=s[k+1];next.push(child(a,b),child(b,a),child(a,b),child(b,a))}
  return{marks,next}}
 // Animated kill step (design/predator-anim/MOTION-SPEC.md). Selection/breeding unchanged; only timing+visuals.
-const STEP_PAUSE=500,STEP_STATIC=1500;let stepBusy=false;
+const STEP_PAUSE=800,STEP_STATIC=1500;let stepBusy=false;
 // Random-death rubber stamps (design/stamp-anim/stamp.js; timing from design/stamp/STAMP-SPEC.md). ms / px / deg.
-// 8 stamps run alongside the predator (start + 7*gap + drop+squash+settle = 850ms << ~2.7s predator run), so click->breed time is unchanged.
-const STAMP={start:0,gap:70,drop:180,squash:60,settle:120,scale:1.8,lift:18,tilt:12,offset:4,shake:1.5,spread:true,dropEase:'cubic-bezier(.55,0,1,.45)'};
+// 8 stamps land one by one across the predator run: start + 7*gap + drop+squash+settle = 150+4200+480 = 4830ms, before the predator's exit starts (5440-520 = 4920ms).
+const STAMP={start:150,gap:600,drop:240,squash:80,settle:160,scale:1.8,lift:18,tilt:12,offset:4,shake:1.5,spread:true,dropEase:'cubic-bezier(.55,0,1,.45)'};
 function lockUI(on){['step','multi','reset','bgs','rbg','hue','val'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=on})}
 async function step(){if(stepBusy)return;stepBusy=true;lockUI(true);
  const{marks,next}=generation();render(marks);

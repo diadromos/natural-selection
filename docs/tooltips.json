@@ -1,9 +1,9 @@
 {
   "#step": {
-    "index.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
-    "mono.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
-    "spots.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
-    "squirts.html": "Run one generation. A red fish marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed."
+    "index.html": "Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.",
+    "mono.html": "Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.",
+    "spots.html": "Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.",
+    "squirts.html": "Run one generation. The red perch swims to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion."
   },
   "#n": "How many generations \"Run N generations\" will run. Ten by default.",
   "#multi": "Run the number of generations in the box at once, with no marks, and show only the result.",
