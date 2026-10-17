@@ -23,7 +23,7 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <div id="grid"></div>
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
 <p class="nav"><a href="index.html" title="Go to the Color version: butterflies in full color.">Color version</a><a href="spots.html" title="Go to the Spots version: white butterflies with gray spots.">Spots version</a><a href="squirts.html" title="Go to the Squirts version: squid in full color.">Squirts version</a></p>
-<p style="max-width:520px;font-size:13px;color:#aaa">Each generation, a predator eats the 8 most visible organisms (fangs), 8 more die at random (skull and crossbones), and the 16 survivors pair up. Genes are 32-bit numbers (00000000&ndash;FFFFFFFF) shown as gray. Each child gets the high 16 bits of one parent and the low 16 bits of the other.</p>
+<p style="font-size:13px;color:#aaa">Each generation, a predator eats the 8 most visible organisms (fangs), 8 more die at random (skull and crossbones), and the 16 survivors pair up. Genes are 32-bit numbers (00000000&ndash;FFFFFFFF) shown as gray. Each child gets the high 16 bits of one parent and the low 16 bits of the other.</p>
 <script>
 const N=32,Q=N/4,MAX=0xFFFFFFFF;let bg,pop,gen;
 const rnd=()=>Math.floor(Math.random()*0x100000000);

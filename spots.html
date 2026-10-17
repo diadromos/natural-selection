@@ -23,7 +23,7 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <div id="grid"></div>
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
 <p class="nav"><a href="index.html" title="Go to the Color version: butterflies in full color.">Color version</a><a href="mono.html" title="Go to the Monochrome version: gray butterflies with 32-bit genes.">Monochrome version</a><a href="squirts.html" title="Go to the Squirts version: squid in full color.">Squirts version</a></p>
-<p style="max-width:520px;font-size:13px;color:#aaa">White butterflies carry two genes: a spot shade (32-bit base gray; each spot varies around it by an offset set by the pattern gene) and a spot pattern (32-bit seed for spot count, sizes and positions). The predator eats the 8 whose area-weighted average gray differs most from the background; 8 more die at random; each child takes the shade of one parent and the pattern of the other. Change the background any time with the slider.</p>
+<p style="font-size:13px;color:#aaa">White butterflies carry two genes: a spot shade (32-bit base gray; each spot varies around it by an offset set by the pattern gene) and a spot pattern (32-bit seed for spot count, sizes and positions). The predator eats the 8 whose area-weighted average gray differs most from the background; 8 more die at random; each child takes the shade of one parent and the pattern of the other. Change the background any time with the slider.</p>
 <script>
 const N=32,Q=N/4,MAX=0xFFFFFFFF,WING=3400;let bg,pop,gen;
 const rnd=()=>Math.floor(Math.random()*0x100000000);
