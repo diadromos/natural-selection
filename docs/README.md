@@ -8,7 +8,7 @@ There is, in every patch of ground and every reach of open water, a quiet and un
 
 This app stages that trial. A **population of 32 creatures** is laid out in a grid of 4 rows by 8 columns, set against a colored **background**. Each generation:
 
-1. **A predator eats the 8 most visible creatures**, the ones whose coloring lies farthest from the background. They are marked with a **red circle and white fangs**.
+1. **A predator eats the 8 most visible creatures**, the ones whose coloring lies farthest from the background. They are marked with a **red bird outline**, a songbird like those Kettlewell watched taking moths from tree trunks; on the Squirts page, where the prey are squid, it is a **red fish**.
 2. **8 more die at random**, whatever their color, because fortune keeps no ledger of merit. They are marked with a **yellow skull and crossbones**.
 3. **The 16 survivors are shuffled and paired.** Each pair has four children, so the population is back to 32. Each child takes one gene from one parent and the other gene from the other parent (what those genes are depends on the page; see below).
 4. **Mutation** (if it is on): each child has a 30% chance of a small random change to its genes.
@@ -40,7 +40,7 @@ On the Spots page a mutation changes the shade gene (70% chance) and flips 1–3
 
 ### On every page
 
-- **Next generation** (`#step`): Runs one generation with the marks shown. The eaten are marked with red fangs, the unlucky with a yellow skull, for 1.5 seconds; then the grid is redrawn with the new brood and the generation count goes up by one. Wait for the redraw before pressing again.
+- **Next generation** (`#step`): Runs one generation with the marks shown. The eaten are marked with a red bird (a red fish on Squirts), the unlucky with a yellow skull, for 1.5 seconds; then the grid is redrawn with the new brood and the generation count goes up by one. Wait for the redraw before pressing again.
 - **Generation count box** (`#n`): A number field, set to **10** by default (minimum 1). It sets how many generations the next button runs. An empty or zero value counts as 1.
 - **Run N generations** (`#multi`): Runs that many generations at once with no marks and no pause, then shows only the final population. Very large numbers can make the page pause for a moment, especially on the Spots page.
 - **Reset** (`#reset`): Starts over: a new random background, 32 new random creatures, generation back to 0.
@@ -71,7 +71,7 @@ On Reset, both sliders move to match the new random background.
 ## What to Watch For
 
 - **The fall of the distance figure.** It usually drops quickly over the first few dozen generations, then levels off as the creatures get close to the background.
-- **The fangs at work.** In single steps, notice that the fanged ones are always the most conspicuous, while the skulls fall anywhere, sometimes on the best-hidden creatures. Selection works on averages, not on individuals.
+- **The bird at work.** In single steps, notice that the ones under the red bird are always the most conspicuous, while the skulls fall anywhere, sometimes on the best-hidden creatures. Selection works on averages, not on individuals.
 - **Mutation turned off.** Reset, uncheck Mutation, and run a hundred generations. The population gets stuck at the best combination its starting genes allow. Turn mutation back on and it starts creeping closer again.
 - **A change of scene.** On the Spots or Squirts pages, let a population adapt, then move the background slider. The distance figure jumps, and the population has to adapt again.
 - **Spots that hide by average.** On the Spots page the predator judges only the overall average gray of the moth (wings and body), so very different spot patterns can be equally well hidden.

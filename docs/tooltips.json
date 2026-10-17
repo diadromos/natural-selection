@@ -1,5 +1,10 @@
 {
-  "#step": "Run one generation. The predator's fangs and fate's skull mark the fallen for a moment, then the survivors breed.",
+  "#step": {
+    "index.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
+    "mono.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
+    "spots.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
+    "squirts.html": "Run one generation. A red fish marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed."
+  },
   "#n": "How many generations \"Run N generations\" will run. Ten by default.",
   "#multi": "Run the number of generations in the box at once, with no marks, and show only the result.",
   "#reset": "Start over with a new random background, a new random population, and generation 0.",
