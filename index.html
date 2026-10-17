@@ -18,13 +18,14 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <button id="multi" title="Run the number of generations in the box at once, with no marks, and show only the result.">Run N generations</button>
 <button id="reset" title="Start over with a new random background, a new random population, and generation 0.">Reset</button>
 <label><input type="checkbox" id="mut" title="When checked, each child has a 30% chance of a small change to its genes. Uncheck to allow only recombination." checked> Mutation</label>
+<button id="sound" type="button" aria-pressed="false" title="Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.">Sound off</button>
 </div>
 <div id="bglabel" title="The background color as #RRGGBB. Each creature&#x27;s color is measured against it."></div>
 <div id="grid"></div>
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
 <p style="font-size:13px;color:#aaa">Each generation, a predator bird eats the 8 most visible organisms (red finch), 8 more die at random (black skull stamp), and the 16 survivors pair up. Each child gets the hue of one parent and the value (brightness/saturation) of the other.</p>
 <p class="nav"><a href="index.html" class="active" aria-current="page">Color</a><a href="mono.html" title="Go to the Monochrome version: gray moths with 32-bit genes.">Mono</a><a href="spots.html" title="Go to the Spots version: white moths with gray spots.">Spots</a><a href="squirts.html" title="Go to the Squirts version: squid in full color.">Squirts</a></p>
-<script src="design/predator-anim/predator-svgs.js"></script><script src="design/predator-anim/predator-anim.js"></script><script src="design/stamp/stamp-svgs.js"></script><script src="design/stamp-anim/stamp.js"></script>
+<script src="design/predator-anim/predator-svgs.js"></script><script src="design/predator-anim/predator-anim.js"></script><script src="design/stamp/stamp-svgs.js"></script><script src="design/stamp-anim/stamp.js"></script><script src="design/sounds/sfx.js"></script>
 <script>
 const N=32,Q=N/4;let bg,pop,gen;
 const rnd=()=>Math.floor(Math.random()*0x1000000);
@@ -63,11 +64,13 @@ async function step(){if(stepBusy)return;stepBusy=true;lockUI(true);
  const{marks,next}=generation();render(marks);
  const eaten=Object.keys(marks).filter(i=>marks[i]=='eaten').map(Number),rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const randomIdx=Object.keys(marks).filter(i=>marks[i]=='random').map(Number);
+ if(window.SFX)SFX.scheduleRun('bird',eaten.length,randomIdx.length,STAMP); // sounds on the same clock as the animations (design/sounds/SOUND-NOTES.md)
  const stamps=window.stampMarks?stampMarks(document.getElementById('grid'),randomIdx,STAMP).catch(e=>console.error(e)):null;
  try{if(window.animatePredator)await animatePredator(document.getElementById('grid'),eaten,'bird')}catch(e){console.error(e)}
  await stamps;
  setTimeout(()=>{pop=shuffle(next);gen++;render();stepBusy=false;lockUI(false)},rm?STEP_STATIC:STEP_PAUSE)}
 function multi(){const n=+document.getElementById('n').value||1;for(let i=0;i<n;i++){pop=shuffle(generation().next);gen++}render()}
 document.getElementById('step').onclick=step;document.getElementById('multi').onclick=multi;document.getElementById('reset').onclick=reset;
+const snd=document.getElementById('sound');snd.onclick=()=>{const on=snd.getAttribute('aria-pressed')!=='true';snd.setAttribute('aria-pressed',String(on));snd.textContent=on?'Sound on':'Sound off';if(window.SFX)SFX.setEnabled(on)};
 reset();
 </script></body></html>

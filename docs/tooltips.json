@@ -37,5 +37,11 @@
   },
   "#val": {
     "squirts.html": "Move the background from white (0) through full hue (50) to black (100). It changes right away."
+  },
+  "#sound": {
+    "index.html": "Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.",
+    "mono.html": "Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.",
+    "spots.html": "Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.",
+    "squirts.html": "Turn sound on or off. When on, Next generation plays perch sounds as the fish hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent."
   }
 }

@@ -4,6 +4,7 @@
 // it only animates transform/opacity of the creature <svg> and the .mark overlay inside eaten cells.
 (function () {
   const T = { entry: 600, hop: 480, grab: 120, exit: 520, gulp: 300 };   // ms; total for 8 targets 5.44 s (John: ~2x slower)
+  window.PREDATOR_T = Object.freeze(Object.assign({}, T));          // single source of truth: design/sounds/sfx.js reads this
   const SWOOP = [0.45, 0, 0.2, 1];          // cubic-bezier for each hop (ease-in-out, quick swoop)
   const FRAME = { bird: 110, fish: 140 };    // frame swap period (ms), slowed with the run
   const CYCLE = { bird: ['f1', 'f2', 'f3', 'f2'], fish: ['f1', 'f2', 'f3', 'f2'] };
