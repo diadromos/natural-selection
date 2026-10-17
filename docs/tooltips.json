@@ -12,14 +12,14 @@
   },
   "#grid > div.org": {
     "index.html": "A butterfly and how closely it matches the background, from 0 to 100%. The least hidden are eaten; a child takes the hue of one parent and the saturation and value of the other.",
-    "mono.html": "A gray butterfly and how closely its shade matches the background, from 0 to 100%. A child takes the high half of one parent's gene and the low half of the other's.",
-    "spots.html": "A spotted butterfly and how closely its average wing gray matches the background, from 0 to 100%. A child takes spot shade from one parent and pattern from the other.",
+    "mono.html": "A gray moth and how closely its shade matches the background, from 0 to 100%. A child takes the high half of one parent's gene and the low half of the other's.",
+    "spots.html": "A spotted moth and how closely its average gray, over wings and body, matches the background, from 0 to 100%. A child takes spot shade from one parent and pattern from the other.",
     "squirts.html": "A squid and how closely its color matches the background, from 0 to 100%. The least hidden are eaten; a child takes the hue of one parent and the saturation and value of the other."
   },
   "#stats": "The generation count and the population's average distance from the background. Lower means better camouflage.",
   "a[href='index.html']": "Go to the Color version: butterflies in full color.",
-  "a[href='mono.html']": "Go to the Monochrome version: gray butterflies with 32-bit genes.",
-  "a[href='spots.html']": "Go to the Spots version: white butterflies with gray spots.",
+  "a[href='mono.html']": "Go to the Monochrome version: gray moths with 32-bit genes.",
+  "a[href='spots.html']": "Go to the Spots version: white moths with gray spots.",
   "a[href='squirts.html']": "Go to the Squirts version: squid in full color.",
   "#bgs": {
     "spots.html": "Set the background gray from 0 (black) to 255 (white). It changes right away, without a reset."
