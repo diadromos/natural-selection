@@ -23,8 +23,8 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <div id="bglabel" title="The background color as #RRGGBB. Use the Hue and Value sliders to change it."></div>
 <div id="grid"></div>
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
-<p class="nav"><a href="index.html" title="Go to the Color version: butterflies in full color.">Color version</a><a href="mono.html" title="Go to the Monochrome version: gray moths with 32-bit genes.">Monochrome version</a><a href="spots.html" title="Go to the Spots version: white moths with gray spots.">Spots version</a></p>
 <p style="font-size:13px;color:#aaa">Each generation, a predator eats the 8 most visible squirts (fangs), 8 more die at random (skull and crossbones), and the 16 survivors pair up. Each child gets the hue of one parent and the value (brightness/saturation) of the other.</p>
+<p class="nav"><a href="index.html" title="Go to the Color version: butterflies in full color.">Color</a><a href="mono.html" title="Go to the Monochrome version: gray moths with 32-bit genes.">Mono</a><a href="spots.html" title="Go to the Spots version: white moths with gray spots.">Spots</a><a href="squirts.html" class="active" aria-current="page">Squirts</a></p>
 <script>
 const N=32,Q=N/4;let bg,pop,gen;
 const rnd=()=>Math.floor(Math.random()*0x1000000);

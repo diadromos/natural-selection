@@ -13,3 +13,11 @@ The desktop layout is in the same file, inside `@media (min-width:900px)`. The p
 1. No markup changes are required. The current pages already have the viewport meta, the stylesheet link, `class="controls"` and `class="nav"`, and that's all the desktop layout needs.
 2. Keep this element order as direct children of `<body>`: `h2`, `.controls` (one or two), `#bglabel`, `#grid`, `#stats`, `p.nav`, the description `<p>`. On desktop, body becomes a 2-column CSS grid: title and nav share a top bar, while the controls, background label, stats and description stack in a ~320px left column. The creature grid (8 × 4) fills the right column. If you add another body-level element, give it a class and tell me where it should go.
 3. The inline `style="max-width:520px;…"` on the description `<p>` is harmless because it's overridden, but you can drop it.
+
+## Footer nav
+The real pages already match this; nothing to change. These are the assumptions mobile.css relies on:
+1. `<p class="nav">` is a direct child of `<body>` and holds exactly the 4 version links (`<a>` elements, no `|` separators and no wrapper elements inside).
+2. The current page's link has `class="active"` and `aria-current="page"` (the CSS targets both `p.nav a[aria-current='page']` and `.nav a.active`). It still has an href, and the CSS gives it a default cursor so it doesn't look like a link.
+3. Phone (<900px): fixed frosted bottom tab bar with safe-area padding. The body already has bottom padding (84px plus the safe-area inset), so the last content isn't hidden. Keep the viewport meta's `viewport-fit=cover`.
+4. Desktop (>=900px): a footer strip in the last body grid row, with centered pill links. The body is at least the window height, so the footer sits at the bottom. If you wrap the nav in a `<footer>`, keep `class="nav"` on the element that holds the links, and the wrapper must be a direct child of `<body>`. Tell me and I'll retarget the selectors.
+5. Short labels ("Color", "Mono", "Spots", "Squirts") would fit the phone tabs on one line. Today "Monochrome version" wraps to 2 lines, which is fine.
