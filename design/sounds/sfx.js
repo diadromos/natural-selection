@@ -1,5 +1,6 @@
 // sfx.js: sound scheduler for the predator run + rubber stamps (see SOUND-NOTES.md).
 // Loaded by all four pages after stamp.js:  <script src="design/sounds/sfx.js"></script>
+// Easter egg: reward-chirp (finch) / reward-pop (perch) on the last stamp's contact (+15 ms).
 // API:  SFX.setEnabled(true|false)   -> called from the #sound toggle's click (unlocks audio; autoplay policy)
 //       SFX.scheduleRun(kind, nEaten, nStamps, STAMP)  -> called in step() right before stampMarks()/animatePredator()
 //       SFX.lastRun                   -> log of the last scheduleRun (name, ms, vol, rate per event; used by tests/mixes)
@@ -9,8 +10,11 @@
 (function () {
   const BASE = (document.currentScript && document.currentScript.src.replace(/[^/]*$/, '')) || 'design/sounds/';
   const NAMES = ['bird-chirp-a', 'bird-chirp-b', 'bird-flutter', 'stamp-thump-1', 'stamp-thump-2', 'stamp-thump-3',
-    'stamp-thump-water', 'water-swoosh-a', 'water-swoosh-b', 'water-bubbles'];
-  const VOL = { thump: 0.8, chirp: 0.45, flutter: 0.35, bubbles: 0.5, swooshHop: 0.3, swooshEnd: 0.35 };
+    'stamp-thump-water', 'water-swoosh-a', 'water-swoosh-b', 'water-bubbles', 'reward-chirp', 'reward-pop'];
+  const VOL = { thump: 0.8, chirp: 0.45, flutter: 0.35, bubbles: 0.5, swooshHop: 0.3, swooshEnd: 0.35, rewardChirp: 0.55, rewardPop: 0.6 };
+  // Easter egg (John): reward note layered on the LAST stamp that lands (the 8th in a normal round).
+  const REWARD_OFFSET = 15;   // ms after that stamp's contact, so the thump's attack isn't masked
+  const REWARD_CLEAR = 300;   // a regular grab chirp/bubbles starting within this many ms after the reward is skipped
   const MASTER = 0.8;
   const THUMPS = ['stamp-thump-1', 'stamp-thump-2', 'stamp-thump-3'];
   const P = { entry: 600, hop: 480, grab: 120, exit: 520 };   // fallback only; real values come from window.PREDATOR_T
@@ -32,15 +36,28 @@
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       master = ctx.createGain(); master.gain.value = MASTER; master.connect(ctx.destination);
     }
-    if (ctx.state !== 'running' && !document.hidden) ctx.resume();
+    if (ctx.state !== 'running' && !isAway()) ctx.resume();
     return load();
   }
   function stopAll() { live.forEach(s => { try { s.stop(); } catch (e) {} }); live.clear(); }
-  // pause audio while the tab is hidden; cancel pending events so nothing plays out of sync on return
-  document.addEventListener('visibilitychange', () => {
-    if (!ctx) return;
-    if (document.hidden) { stopAll(); ctx.suspend(); } else if (on) ctx.resume();
-  });
+  // Background handling (John): mute while the tab/page is in the background, resume on return if the
+  // #sound toggle is still on. Never touches `on` (the toggle's state/label/aria-pressed belong to the page).
+  // Background = visibilitychange->hidden or pagehide (incl. bfcache); return = visibilitychange->visible or
+  // pageshow (incl. persisted). Going away stops every queued source and bumps `epoch`, so a run that is
+  // still waiting to schedule is cancelled too: nothing from before is replayed on return (the current
+  // run's remaining sounds are dropped; the next Next generation schedules normally).
+  let away = false, epoch = 0;
+  const isAway = () => away || document.hidden;
+  function goAway() {
+    epoch++; stopAll();
+    if (ctx && ctx.state !== 'closed') ctx.suspend().catch(() => {});   // always: a resume() may be pending
+  }
+  function comeBack() {
+    if (ctx && on && !isAway() && ctx.state !== 'closed') ctx.resume().catch(() => {});        // always: a suspend() may be pending
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) goAway(); else comeBack(); });
+  window.addEventListener('pagehide', () => { away = true; goAway(); });
+  window.addEventListener('pageshow', () => { away = false; comeBack(); });
   function play(log, name, ms, t0, vol, vary = true) {
     const b = bufs[name]; if (!b) return;
     const when = t0 + ms / 1000;
@@ -61,17 +78,20 @@
     const water = kind === 'fish' && window.SFX.waterStamp;
     for (let n = 0; n < nStamps; n++)
       play(log, water ? 'stamp-thump-water' : THUMPS[rr++ % 3], STAMP.start + n * STAMP.gap + STAMP.drop, t0, VOL.thump);
+    const tReward = nStamps ? STAMP.start + (nStamps - 1) * STAMP.gap + STAMP.drop + REWARD_OFFSET : NaN;   // 4605 ms with 8 stamps
+    if (nStamps) play(log, kind === 'fish' ? 'reward-pop' : 'reward-chirp', tReward, t0, kind === 'fish' ? VOL.rewardPop : VOL.rewardChirp, false);
+    const clear = ms => !(ms >= tReward && ms - tReward < REWARD_CLEAR);  // false -> would smear into the reward note
     if (!nEaten) return;                                                   // animatePredator does nothing -> no predator sounds
     const grab = n => T.entry + n * (T.grab + T.hop);                      // grab n starts (gulp starts)
     const exit = grab(nEaten - 1) + T.grab;                                // exit flight starts
     if (kind === 'bird') {
       play(log, 'bird-flutter', 0, t0, VOL.flutter);
-      for (let n = 0; n < nEaten; n++) play(log, n % 2 ? 'bird-chirp-b' : 'bird-chirp-a', grab(n), t0, VOL.chirp);
+      for (let n = 0; n < nEaten; n++) if (clear(grab(n))) play(log, n % 2 ? 'bird-chirp-b' : 'bird-chirp-a', grab(n), t0, VOL.chirp);
       play(log, 'bird-flutter', exit, t0, VOL.flutter);
     } else {                                                               // perch: underwater swooshes + bubbles, no chirps
       play(log, 'water-swoosh-a', 0, t0, VOL.swooshEnd);
       for (let n = 0; n < nEaten; n++) {
-        play(log, 'water-bubbles', grab(n), t0, VOL.bubbles);
+        if (clear(grab(n))) play(log, 'water-bubbles', grab(n), t0, VOL.bubbles);
         if (n < nEaten - 1) play(log, n % 2 ? 'water-swoosh-a' : 'water-swoosh-b', grab(n) + T.grab, t0, VOL.swooshHop);
       }
       play(log, 'water-swoosh-b', exit, t0, VOL.swooshEnd);
@@ -85,18 +105,18 @@
     setEnabled(v) {
       on = !!v; try { localStorage.setItem('ns-sfx', on ? '1' : '0'); } catch (e) {}
       if (on) return unlock();
-      if (ctx) { stopAll(); ctx.suspend(); } return Promise.resolve();
+      epoch++; if (ctx) { stopAll(); ctx.suspend(); } return Promise.resolve();
     },
     // kind: 'bird' | 'fish'; nEaten = eaten.length; nStamps = randomIdx.length; STAMP = the page's STAMP const
     scheduleRun(kind, nEaten, nStamps, STAMP) {
-      if (!on || !ctx || document.hidden) return;
+      if (!on || !ctx || isAway()) return;
       if (reduced()) return;                                               // no animation -> no sound
       if (!nEaten && !nStamps) return;
       const perf0 = performance.now(), log = [];
-      const run = { kind, nEaten, nStamps, perf0, events: log };
+      const run = { kind, nEaten, nStamps, perf0, events: log }, ep = epoch;
       window.SFX.lastRun = run;
       const go = () => {
-        if (!on || document.hidden || window.SFX.lastRun !== run) return;
+        if (!on || isAway() || ep !== epoch || window.SFX.lastRun !== run) return;
         const lat = ctx.outputLatency || ctx.baseLatency || 0;
         // t0 = context time of the click; corrects for any wait for resume()/decoding
         const t0 = ctx.currentTime - lat - (performance.now() - perf0) / 1000;

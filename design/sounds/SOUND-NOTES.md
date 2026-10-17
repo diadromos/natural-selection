@@ -21,9 +21,11 @@ Silence is trimmed at both ends. Thumps have no fade-in, so the transient is at 
 | `water-swoosh-a` | 338 ms | 4.6 / 6.6 KB | ≈ -18 LUFS | 0.3 hop / 0.35 entry-exit | low filtered water push (160→850 Hz sweep) + 8 bubbles |
 | `water-swoosh-b` | 299 ms | 4.3 / 6.2 KB | ≈ -17 LUFS | 0.3 / 0.35 | brighter and quicker (200→1000 Hz) + 11 bubbles |
 | `water-bubbles` | 239 ms | 3.7 / 5.9 KB | ≈ -18 LUFS | 0.5 | a short cluster of 14 bubbles (the gulp) |
-| `stamp-thump-water` | 287 ms | 4.0 / 4.8 KB | ≈ -17 LUFS | 0.8 | optional muffled (700 Hz low-pass) stamp for squirts.html |
+| `stamp-thump-water` | 287 ms | 4.0 / 4.8 KB | ≈ -17 LUFS | 0.8 | muffled (700 Hz low-pass) stamp, used on squirts.html (`SFX.waterStamp = true`) |
+| `reward-chirp` | 307 ms | 4.3 / 6.0 KB | ≈ -12.5 LUFS | 0.55 | **easter egg**, finch: bright RISING two-note "tu-WEET" (≈3.5 kHz held, then 5.2→6.0 kHz sweep up) + high sparkle glints (7–10 kHz) |
+| `reward-pop` | 340 ms | 4.9 / 6.6 KB | ≈ -12.3 LUFS | 0.6 | **easter egg**, perch: big rising "bloop" bubble (380→1280 Hz) → bright pop → fizz of small bubbles + sparkle |
 
-Total: about 136 KB for all 20 web files (largest 7.4 KB). LUFS figures are approximate because the clips are this short.
+Total: about 158 KB for all 24 web files (largest 7.4 KB). LUFS figures are approximate because the clips are this short.
 Leading silence: none. Swooshes and bubbles start at sample 0 but swell softly (reaching -20 dB of peak by 6–17 ms) because they are pushes, not hits. Their audible peak is at 80–170 ms.
 
 ## Timeline (ms from the click on "Next generation", i.e. the `step()` call)
@@ -53,11 +55,21 @@ Sources: `T = {entry:600, hop:480, grab:120, exit:520}` in `design/predator-anim
 | exit | squirts | `water-swoosh-b` | 4920 | 0.35 |
 | (optional) stamp contact | squirts | `stamp-thump-water` instead of 1/2/3 | 390 + 600k | 0.8 |
 
+### Easter egg: reward note on the last stamp (John)
+| event | page | sound | at (ms) | vol |
+|---|---|---|---|---|
+| contact of the **last stamp that lands** (the 8th: k=7) | finch pages | `reward-chirp`, layered on that stamp's thump | 390 + 600·7 **+ 15 = 4605** | 0.55, no random pitch |
+| same | squirts | `reward-pop` | 4605 | 0.6, no random pitch |
+- **+15 ms offset:** the thump's transient and body (first ~15 ms, 46–175 Hz) come through clean, and the reward note (3–10 kHz / rising bloop) sits on top as a separate event. Both are clearly heard. 0 ms also works; above +30 ms it starts to sound like a flam.
+- **Distinct from regular chirps:** the regular chirps are down-swept (a) or short ticks (b). The reward holds a low first note and then jumps up about a fifth and keeps rising, it is longer, and it has sparkle glints. It also plays without random pitch, so it sounds identical every round (a recognizable "ding").
+- **Collision rule:** grab #7 (4800) would chirp/bubble 195 ms into the reward. So a regular grab chirp/bubbles that starts within 300 ms after the reward is **skipped**, and the reward stands in for it. The thump, flutter and swooshes are unaffected.
+- **Fewer than 8 stamps:** today `generation()` always kills exactly Q = N/4 = 8 at random, so there are always 8 stamps. If that ever changes (or a cell has no stamp svg), the reward fires on the **last stamp that actually lands**, at 390 + 600·(nStamps−1) + 15 (sfx.js uses `randomIdx.length`). John said "8th", and in the current code the last stamp is always the 8th. If he wants it strictly on the 8th only, change the `if (nStamps)` condition in sfx.js to `if (nStamps >= 8)`. With 0 stamps there is no reward. With 0 eaten (no predator) the reward still plays on the last stamp.
+
 **Chirps go on the grab, not on the hop start.** The grab is the event (the bird lands and the creature disappears), and each chirp then sits 210 ms after a thump, so the result is a steady thump · chirp · thump · chirp pattern. The thump tails (≤ 250 ms) overlap the start of the chirp by 40 ms at most, which is inaudible. If John prefers chirps on take-off, use 720 + 600n: the chirp (≤ 250 ms) still ends before the next thump at 990 + 600n.
-`preview/preview-mix-index.ogg` and `preview/preview-mix-squirts.ogg` are full 6.3 s renders of exactly this schedule. Mixed peaks are -2.9 and -2.5 dBFS, so nothing stacks too loud. `preview/slow-index-1280-with-sound.mp4` is the recording with the index mix laid on top, so you can watch the sync.
+`preview/preview-mix-index.ogg` and `preview/preview-mix-squirts.ogg` are full 6.3 s renders of exactly this schedule, including the reward note and the water thump on squirts. Mixed peaks are -2.9 and -2.1 dBFS, so nothing stacks too loud. `preview/slow-index-1280-with-sound.mp4` is the recording with the index mix laid on top, so you can watch the sync.
 
 ## Integration tips (for Ken)
-- **Use Web Audio and schedule from one clock.** The drop-in `sfx.js` in this folder does exactly that and is not wired into any page.
+- **Use Web Audio and schedule from one clock.** The `sfx.js` in this folder does exactly that (now wired in; see Ken's section below).
   Call `SFX.scheduleRun('bird'|'fish', eaten.length, randomIdx.length, STAMP)` in `step()` on the line just before `stampMarks(...)`.
   It computes every trigger from the constants above on `AudioContext.currentTime` and subtracts `outputLatency`. This keeps the sound sample-accurate and in sync even if the main thread hiccups, which per-event `setTimeout` would not do.
   Keep its `P` in sync with `T` if the predator timing changes, or export `T` from predator-anim.js.
@@ -67,7 +79,7 @@ Sources: `T = {entry:600, hop:480, grab:120, exit:520}` in `design/predator-anim
 - **Levels.** All clips are peak-normalized to the same level. Use the vol column as gain, and put a master gain of about 0.8 on top. At most 2–3 clips ever overlap, so there's no need for a limiter.
 - **Reduced motion.** When `prefers-reduced-motion` is on, the animations don't run, so don't play the sounds either (sfx.js skips them). The same goes for `multi()` (step N generations), which renders without animation.
 - **Mobile.** iOS mutes Web Audio while the ring/silent switch is set to silent. That's expected, so don't fight it. Use Web Audio rather than `<audio>` elements: iOS plays only one `<audio>` at a time and adds latency. Keep the toggle large enough to tap. Suspend the context on `visibilitychange` → hidden.
-- **Regenerating.** Run `python3 gen-sounds.py`. It is deterministic (fixed seeds) and rewrites `wav/`, all mp3/ogg files and the `preview/` mixes. Set `USE_WATER_STAMP = True` in the script to preview the muffled stamp on squirts.
+- **Regenerating.** Run `python3 gen-sounds.py`. It is deterministic (fixed seeds) and rewrites `wav/`, all mp3/ogg files and the `preview/` mixes. `USE_WATER_STAMP = True` (default, matches `SFX.waterStamp`) puts the muffled stamp in the squirts preview, and `REWARD_OFFSET` (15 ms) sets the reward offset in the previews. Note: Vorbis writes a random stream serial, so re-rendering changes OGG bytes even when the audio is identical. Restore unchanged files with `git checkout` to avoid noise.
 
 ## Integration (Ken, animate-predators)
 - Wired into all four pages: `sfx.js` loads after `stamp.js`; `step()` calls `SFX.scheduleRun(kind, eaten.length, randomIdx.length, STAMP)` just before `stampMarks(...)` (`'bird'` on index/mono/spots, `'fish'` on squirts).
@@ -75,5 +87,5 @@ Sources: `T = {entry:600, hop:480, grab:120, exit:520}` in `design/predator-anim
 - Squirts uses the underwater set (swooshes + bubbles, no chirps) and the muffled `stamp-thump-water` (`SFX.waterStamp = true`, was `WATER_STAMP = false`).
 - `#sound` toggle in the controls: off on every page load ("Sound off", `aria-pressed="false"`); the stored localStorage choice is written but not restored, because audio cannot start without a click anyway.
 - If Sound was just clicked and the clips are still decoding (or the context is resuming), the run is scheduled once ready, measured from the click; events more than 30 ms late are dropped instead of played out of sync.
-- Tab hidden: pending sources are stopped and the context is suspended; it resumes on return if sound is on. Muting also stops pending sources.
+- Background (John): `visibilitychange` → hidden and `pagehide` (incl. bfcache) stop every queued source, cancel a run still waiting to be scheduled, and suspend the context. `visibilitychange` → visible and `pageshow` (incl. `persisted`) resume it only if the #sound toggle is still on and the page is visible. The toggle's state, label and `aria-pressed` are never changed by this. Sounds left in the interrupted run are dropped (no backlog replay); the next Next generation schedules normally. Muting also stops pending sources.
 - `SFX.lastRun` logs every scheduled event (name, ms, gain, playbackRate) for tests and offline mixes.

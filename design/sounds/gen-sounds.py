@@ -63,6 +63,25 @@ def flutter(dur=.36, rate=17.0, seed=3):  # wing-beat noise bursts, swelling the
     env = np.sin(np.pi * np.clip(u * 1.15, 0, 1)) ** 0.8
     return n * beat * env
 
+def sparkle(dur, rng, n=7, f_lo=7000, f_hi=10500, gain=.18):  # tiny high glints
+    b = np.zeros(int(SR * dur))
+    for k in range(n):
+        f = rng.uniform(f_lo, f_hi); t = t_(.03)
+        place(b, gain * osc(np.full(len(t), f)) * np.exp(-t / .006) * (1 - np.exp(-t / .0004)), rng.uniform(.02, dur * .8))
+    return b
+def reward_chirp():  # easter egg: bright RISING two-note "tu-WEET" (a 5th up), clearly unlike the down-swept regular chirps
+    rng = np.random.default_rng(31); b = np.zeros(int(SR * .36))
+    place(b, syllable(.085, 3000, 3500, 3700, rng, (1, .45, .2, .08)), 0)          # note 1 ~3.5 kHz, flat-rising
+    place(b, syllable(.16, 4600, 5400, 6600, rng, (1, .4, .15)), .1)               # note 2 ~5.3 kHz, sweeping up
+    return b + sparkle(.36, rng)
+def reward_pop():    # easter egg: big upward "bloop" bubble + bright pop + small sparkly bubbles
+    rng = np.random.default_rng(32); dur = .34; t = t_(dur); b = np.zeros(len(t))
+    tb = t_(.16); f = 380 + 900 * (tb / .16) ** 1.4                               # big bubble rising 380 -> 1280 Hz
+    place(b, osc(f) * np.sin(np.pi * np.clip(tb / .16, 0, 1)) ** .5 * (1 - np.exp(-tb / .002)), 0)
+    tp = t_(.05); place(b, .6 * osc(1600 + 2200 * tp / .05) * np.exp(-tp / .012), .15)   # the "pop"
+    for k in range(9): place(b, bubble(rng.uniform(.45, 1.2), rng, rng.uniform(.2, .45)), rng.uniform(.17, .28))
+    return b + sparkle(dur, rng, 5, 5000, 8000, .12)
+
 # ---------------- rubber stamp ----------------
 def thump(seed, f0=150, f1=52, body_ms=110, slap_fc=1800, slap_q=1.4, slap_gain=.55, peel=True, muffle=None):
     rng = np.random.default_rng(seed); dur = .30; t = t_(dur)
@@ -107,6 +126,8 @@ SOUNDS = {
     'water-swoosh-a':      lambda: swoosh(.34, 21, 160, 850, 8),
     'water-swoosh-b':      lambda: swoosh(.30, 22, 200, 1000, 11),
     'water-bubbles':       lambda: swoosh(.24, 23, 120, 400, 14) * .6,
+    'reward-chirp':        lambda: reward_chirp(),
+    'reward-pop':          lambda: reward_pop(),
     'stamp-thump-water':   lambda: thump(14, 120, 44, 150, 900, 1.0, .35, peel=False, muffle=700),
 }
 THUMPS = {k for k in SOUNDS if k.startswith('stamp')}
@@ -127,6 +148,9 @@ def preview():
         for n in range(8):
             th = 'stamp-thump-water' if (kind == 'fish' and USE_WATER_STAMP) else thumps[n % 3]
             place(b, .8 * load(th) * (1 - .08 * (n % 2)), (390 + 600 * n) / 1000)
+            if n == 7:
+                place(b, (.55 if kind == 'bird' else .6) * load('reward-chirp' if kind == 'bird' else 'reward-pop'), (390 + 600 * n + REWARD_OFFSET) / 1000)
+                continue                                    # last grab (4800) is covered by the reward, no regular chirp/bubbles
             if kind == 'bird':
                 place(b, .45 * load('bird-chirp-a' if n % 2 == 0 else 'bird-chirp-b'), (600 + 600 * n) / 1000)
             else:
@@ -141,7 +165,8 @@ def preview():
         wp = os.path.join(tempfile.gettempdir(), f'preview-{page}.wav'); write_wav(wp, b)
         subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', wp, '-c:a', 'libvorbis', '-q:a', '4', os.path.join(HERE, 'preview', f'preview-mix-{page}.ogg')], check=True)
         print(f'preview-{page}: raw mix peak {20*np.log10(pk):+.1f} dBFS')
-USE_WATER_STAMP = False
+USE_WATER_STAMP = True    # matches sfx.js SFX.waterStamp = true (squirts uses the muffled thump)
+REWARD_OFFSET = 15   # ms after the last stamp's contact, so the thump's attack stays clean
 
 if __name__ == '__main__':
     for name, fn in SOUNDS.items():
