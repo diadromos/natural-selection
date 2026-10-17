@@ -25,6 +25,7 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
 <p style="font-size:13px;color:#aaa">Each generation, a predator fish eats the 8 most visible squirts (red fish), 8 more die at random (skull and crossbones), and the 16 survivors pair up. Each child gets the hue of one parent and the value (brightness/saturation) of the other.</p>
 <p class="nav"><a href="index.html" title="Go to the Color version: butterflies in full color.">Color</a><a href="mono.html" title="Go to the Monochrome version: gray moths with 32-bit genes.">Mono</a><a href="spots.html" title="Go to the Spots version: white moths with gray spots.">Spots</a><a href="squirts.html" class="active" aria-current="page">Squirts</a></p>
+<script src="design/predator-anim/predator-svgs.js"></script><script src="design/predator-anim/predator-anim.js"></script>
 <script>
 const N=32,Q=N/4;let bg,pop,gen;
 const rnd=()=>Math.floor(Math.random()*0x1000000);
@@ -53,7 +54,15 @@ function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b],bg)-dist(p
  const s=shuffle(surv.map(i=>pop[i])),next=[];
  for(let k=0;k<s.length;k+=2){const a=s[k],b=s[k+1];next.push(child(a,b),child(b,a),child(a,b),child(b,a))}
  return{marks,next}}
-function step(){const{marks,next}=generation();render(marks);setTimeout(()=>{pop=shuffle(next);gen++;render()},1500)}
+// Animated kill step (design/predator-anim/MOTION-SPEC.md). Selection/breeding unchanged; only timing+visuals.
+const STEP_PAUSE=500,STEP_STATIC=1500,SKULL_FADE=350;let stepBusy=false;
+function lockUI(on){['step','multi','reset','bgs','rbg','hue','val'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=on})}
+async function step(){if(stepBusy)return;stepBusy=true;lockUI(true);
+ const{marks,next}=generation();render(marks);
+ const eaten=Object.keys(marks).filter(i=>marks[i]=='eaten').map(Number),rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(!rm)document.querySelectorAll('#grid .random .mark').forEach(m=>m.animate([{opacity:0},{opacity:1}],{duration:SKULL_FADE,easing:'ease-out',fill:'both'}));
+ try{if(window.animatePredator)await animatePredator(document.getElementById('grid'),eaten,'fish')}catch(e){console.error(e)}
+ setTimeout(()=>{pop=shuffle(next);gen++;render();stepBusy=false;lockUI(false)},rm?STEP_STATIC:STEP_PAUSE)}
 function multi(){const n=+document.getElementById('n').value||1;for(let i=0;i<n;i++){pop=shuffle(generation().next);gen++}render()}
 document.getElementById('step').onclick=step;document.getElementById('multi').onclick=multi;document.getElementById('reset').onclick=reset;
 

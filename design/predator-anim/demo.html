@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Predator animation demo</title>
+<style>
+body{margin:0;background:#1b1d22;color:#ddd;font:14px system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:16px}
+h1{font-size:18px;margin:4px 0 10px}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+button{font:600 14px system-ui;border:0;border-radius:999px;padding:10px 18px;background:#30343e;color:#eee;cursor:pointer}
+button.on{background:#7fd4a8;color:#10251a}
+#grid{display:grid;grid-template-columns:repeat(8,90px);gap:10px;padding:16px;border-radius:24px;background:#8a9a6a}
+.org{width:90px;height:90px;position:relative;display:flex;align-items:center;justify-content:center}
+.org>svg{width:70px;height:70px}
+.mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;filter:drop-shadow(0 0 3px #000);opacity:0}
+.eaten .mark{opacity:1}
+#clock{font:12px ui-monospace,monospace;color:#999;min-width:90px}
+</style></head><body>
+<h1>Predator run: finch (index/mono/spots) and perch (squirts)</h1>
+<div class="bar"><button id="bird" class="on">Bird</button><button id="fish">Fish</button><button id="auto" class="on">Alternate</button><span id="clock"></span></div>
+<div id="grid"></div>
+<p style="color:#999;max-width:760px;font-size:13px">Placeholder creatures are colored blobs. Use <code>?kind=fish&amp;t=1200</code> to freeze the run at 1200 ms for screenshots. With prefers-reduced-motion, the static marks just appear.</p>
+<script src="predator-svgs.js"></script>
+<script src="predator-anim.js"></script>
+<script>
+const P=new URLSearchParams(location.search), FREEZE=P.has('t')?+P.get('t'):null;
+let kind=P.get('kind')||'bird', auto=!P.has('kind');
+const grid=document.getElementById('grid');
+let seed=7; const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const STATIC={bird:"<svg viewBox='0 0 80 80' width='80' height='80'>"+PREDATOR_SVGS.bird.split("<g class='perch'>")[1].replace(/<\/g><\/svg>$/,'')+"</svg>",
+              fish:PREDATOR_SVGS.fish.replace("<g class='f1'>","<g class='f1' style='display:none'>").replace("<g class='f3'>","<g class='f3' style='display:none'>")};
+function build(eaten){
+  grid.innerHTML='';
+  for(let i=0;i<32;i++){
+    const h=Math.floor(rnd()*360), d=document.createElement('div');
+    d.className='org'+(eaten.includes(i)?' eaten':'');
+    d.innerHTML=`<svg viewBox='0 0 70 70'><ellipse cx='35' cy='35' rx='28' ry='22' fill='hsl(${h},55%,55%)' stroke='#0005' stroke-width='1.5'/></svg>`+(eaten.includes(i)?`<div class='mark'>${STATIC[kind]}</div>`:'');
+    grid.appendChild(d);
+  }
+}
+function pick(){const s=new Set();while(s.size<8)s.add(Math.floor(rnd()*32));return [...s]}
+async function cycle(){
+  const eaten=pick(); build(eaten);
+  const t0=performance.now();
+  const p=animatePredator(grid,eaten,kind);
+  if(FREEZE!=null){ document.getAnimations().forEach(a=>{a.pause();a.currentTime=FREEZE}); document.getElementById('clock').textContent='frozen t='+FREEZE+'ms'; return; }
+  const tick=()=>{const e=performance.now()-t0; document.getElementById('clock').textContent=Math.round(e)+' ms'; if(e<3200) requestAnimationFrame(tick)}; tick();
+  const total=await p; document.getElementById('clock').textContent='total '+Math.round(total||0)+' ms';
+  await new Promise(r=>setTimeout(r,900));
+  if(auto) setKind(kind==='bird'?'fish':'bird',true);
+  cycle();
+}
+function setKind(k,keepAuto){kind=k;document.getElementById('bird').classList.toggle('on',k==='bird');document.getElementById('fish').classList.toggle('on',k==='fish');if(!keepAuto){auto=false;document.getElementById('auto').classList.remove('on')}}
+document.getElementById('bird').onclick=()=>setKind('bird');document.getElementById('fish').onclick=()=>setKind('fish');
+document.getElementById('auto').onclick=e=>{auto=!auto;e.target.classList.toggle('on',auto)};
+setKind(kind,true);document.getElementById('auto').classList.toggle('on',auto);
+cycle();
+</script></body></html>
