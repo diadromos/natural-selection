@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Natural Selection Demo (Spots)</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#222;color:#eee;display:flex;flex-direction:column;align-items:center;margin:20px}
+#grid{display:grid;grid-template-columns:repeat(8,90px);gap:14px;padding:24px;border-radius:12px;margin:16px}
+.org{width:90px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;font:10px monospace;color:inherit;transition:opacity .4s,transform .4s}.org svg{width:86px;height:72px}
+.org{position:relative}.mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;pointer-events:none;filter:drop-shadow(0 0 3px #000)}.eaten>svg,.random>svg{opacity:.8}
+
+button,input{font-size:15px;margin:4px;padding:6px 12px}
+#stats{font-family:monospace;margin-top:8px;text-align:center}
+</style>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="stylesheet" href="design/mobile.css"></head><body>
+<h2>Natural Selection: Camouflage (Spots)</h2>
+<div class="controls">
+<button id="step" title="Run one generation. The predator&#x27;s fangs and fate&#x27;s skull mark the fallen for a moment, then the survivors breed.">Next generation</button>
+<input id="n" title="How many generations &quot;Run N generations&quot; will run. Ten by default." type="number" value="10" min="1">
+<button id="multi" title="Run the number of generations in the box at once, with no marks, and show only the result.">Run N generations</button>
+<button id="reset" title="Start over with a new random background, a new random population, and generation 0.">Reset</button>
+<label><input type="checkbox" id="mut" title="When checked, each child has a 30% chance of a small change to its genes. Uncheck to allow only recombination." checked> Mutation</label><br><label>Background gray <input type="range" id="bgs" title="Set the background gray from 0 (black) to 255 (white). It changes right away, without a reset." min="0" max="255"></label> <button id="rbg" title="Pick a new random gray background without resetting the population.">Random background</button>
+</div>
+<div id="bglabel" title="The background gene as a 32-bit number in hex, drawn as gray. Use the slider to change it."></div>
+<div id="grid"></div>
+<div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
+<p class="nav"><a href="index.html" title="Go to the Color version: butterflies in full color.">Color version</a><a href="mono.html" title="Go to the Monochrome version: gray butterflies with 32-bit genes.">Monochrome version</a><a href="squirts.html" title="Go to the Squirts version: squid in full color.">Squirts version</a></p>
+<p style="max-width:520px;font-size:13px;color:#aaa">White butterflies carry two genes: a spot shade (32-bit base gray; each spot varies around it by an offset set by the pattern gene) and a spot pattern (32-bit seed for spot count, sizes and positions). The predator eats the 8 whose area-weighted average gray differs most from the background; 8 more die at random; each child takes the shade of one parent and the pattern of the other. Change the background any time with the slider.</p>
+<script>
+const N=32,Q=N/4,MAX=0xFFFFFFFF,WING=3400;let bg,pop,gen;
+const rnd=()=>Math.floor(Math.random()*0x100000000);
+const hx=g=>g.toString(16).padStart(8,'0').toUpperCase();
+const gray=g=>Math.round(g/MAX*255);
+const hex=g=>{const v=gray(g).toString(16).padStart(2,'0');return'#'+v+v+v};
+function lblColor(h){const c=parseInt(h.substr(1,2),16)/255,Y=c<=.04045?c/12.92:((c+.055)/1.055)**2.4;return (Y+.05)/.05>=1.05/(Y+.05)?'#000':'#fff'}
+function prng(s){return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+const WP="<path d='M50 39 C36 -6,-6 -4,2 26 C5 44,30 48,50 41Z'/><path d='M50 39 C64 -6,106 -4,98 26 C95 44,70 48,50 41Z'/><path d='M50 41 C28 38,2 52,12 70 C22 86,46 70,50 45Z'/><path d='M50 41 C72 38,98 52,88 70 C78 86,54 70,50 45Z'/>";
+// flatten wing beziers to polygons, then sample a grid of points inside the wings
+const POLYS=[...WP.matchAll(/d='([^']+)'/g)].map(m=>{const n=m[1].match(/-?\d+(\.\d+)?/g).map(Number),pts=[[n[0],n[1]]];
+ for(let i=2;i+5<n.length;i+=6){const[p0x,p0y]=pts[pts.length-1];for(let t=1;t<=16;t++){const u=t/16,v=1-u;
+  pts.push([v*v*v*p0x+3*v*v*u*n[i]+3*v*u*u*n[i+2]+u*u*u*n[i+4],v*v*v*p0y+3*v*v*u*n[i+1]+3*v*u*u*n[i+3]+u*u*u*n[i+5]])}}return pts});
+function inPoly(x,y,P){let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const[xi,yi]=P[i],[xj,yj]=P[j];if((yi>y)!=(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c}
+const SAMPLES=[];for(let y=0.5;y<80;y+=1.5)for(let x=0.5;x<100;x+=1.5)if(POLYS.some(P=>inPoly(x,y,P)))SAMPLES.push([x,y]);
+const cache=new Map();
+// pattern gene -> spot layout + per-spot shade offset (gray units, -70..+70); heritable with the pattern
+function spots(p){if(cache.has(p))return cache.get(p);const r=prng(p),n=4+Math.floor(r()*9),a=[];
+ for(let i=0;i<n;i++)a.push({x:r()*50,y:r()*80,r:2+r()*r()*26,off:(r()*2-1)*70});
+ cache.set(p,a);return a}
+const spotGray=(o,s)=>Math.min(255,Math.max(0,Math.round(gray(o.c)+s.off)));
+const agCache=new Map();
+// accurate area-weighted average gray: topmost spot (or white) at each wing sample point; spots mirrored
+function avgGray(o){const k=o.c+':'+o.p;if(agCache.has(k))return agCache.get(k);const S=spots(o.p),G=S.map(s=>spotGray(o,s));let sum=0;
+ for(const[x,y]of SAMPLES){let g=255;for(let i=S.length-1;i>=0;i--){const s=S[i],dy=y-s.y;if((x-s.x)**2+dy*dy<=s.r*s.r||(x-100+s.x)**2+dy*dy<=s.r*s.r){g=G[i];break}}sum+=g}
+ const v=sum/SAMPLES.length;if(agCache.size>20000)agCache.clear();agCache.set(k,v);return v}
+const dist=o=>Math.abs(avgGray(o)-gray(bg));
+const clampG=x=>Math.min(MAX,Math.max(0,Math.round(x)));
+function child(cp,pp){let c=cp.c,p=pp.p;
+ if(document.getElementById('mut').checked&&Math.random()<.3){if(Math.random()<.7)c=clampG(c+(Math.random()*2-1)*2**26);if(Math.random()<.7){const k=1+(Math.random()*3|0);for(let i=0;i<k;i++)p=(p^(1<<(Math.random()*32|0)))>>>0}}
+ return{c,p}}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+let lastMarks={};
+function setBg(g){bg=g;document.getElementById('bgs').value=gray(g);render(lastMarks)}
+function reset(){bg=rnd();document.getElementById('bgs').value=gray(bg);pop=Array.from({length:N},()=>({c:rnd(),p:rnd()}));gen=0;render()}
+function render(marks={}){lastMarks=marks;const g=document.getElementById('grid');document.getElementById('bglabel').textContent='Background: '+hx(bg);g.style.background=hex(bg);g.style.color=lblColor(hex(bg));g.innerHTML='';
+ pop.forEach((o,i)=>{const d=document.createElement('div');d.className='org '+(marks[i]||'');d.title="A spotted butterfly and how closely its average wing gray matches the background, from 0 to 100%. A child takes spot shade from one parent and pattern from the other.";const S=spots(o.p);
+ const sp=S.map(s=>{const v=spotGray(o,s).toString(16).padStart(2,'0'),f='#'+v+v+v;return `<g fill='${f}'><circle cx='${s.x.toFixed(1)}' cy='${s.y.toFixed(1)}' r='${s.r.toFixed(1)}'/><circle cx='${(100-s.x).toFixed(1)}' cy='${s.y.toFixed(1)}' r='${s.r.toFixed(1)}'/></g>`}).join('');
+ d.innerHTML=`<svg viewBox='0 0 100 80'><defs><clipPath id='w${i}'>${WP}</clipPath></defs><g fill='#fff'>${WP}</g><g clip-path='url(#w${i})'>${sp}</g><g fill='none' stroke='#0005' stroke-width='1.5'>${WP}</g><ellipse cx='50' cy='42' rx='3' ry='18' fill='#333'/><path d='M49 25 Q44 10 38 6 M51 25 Q56 10 62 6' stroke='#333' stroke-width='1.5' fill='none'/></svg><span>${(100*(1-(dist(o)/255))).toFixed(1)}%</span>`+(marks[i]=='eaten'?`<div class='mark'><svg viewBox='0 0 80 80' width='80' height='80'><circle cx='40' cy='40' r='34' fill='none' stroke='#e00' stroke-width='3'/><path d='M14 22 Q40 34 66 22' stroke='#e00' stroke-width='2.5' fill='none'/><path d='M24 26 L29 50 L34 30 M46 30 L51 50 L56 26' fill='none' stroke='#fff' stroke-width='2.5' stroke-linejoin='round'/></svg></div>`:marks[i]=='random'?`<div class='mark'><svg viewBox='0 0 80 80' width='80' height='80' fill='none' stroke='#ff0' stroke-width='2.5' stroke-linecap='round'><path d='M40 12 C24 12 18 24 18 34 C18 42 24 46 26 48 L26 56 L54 56 L54 48 C56 46 62 42 62 34 C62 24 56 12 40 12Z'/><circle cx='32' cy='34' r='5'/><circle cx='48' cy='34' r='5'/><path d='M40 40 L37 46 L43 46Z'/><path d='M34 56 L34 50 M40 56 L40 50 M46 56 L46 50'/><path d='M10 60 L70 76 M70 60 L10 76'/></svg></div>`:'');g.appendChild(d)});
+ const avg=pop.reduce((s,o)=>s+dist(o),0)/N;
+ document.getElementById('stats').innerHTML=`Generation ${gen} | Avg distance from background: ${avg.toFixed(1)} / 255 (${(avg/2.55).toFixed(1)}%)`}
+function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b])-dist(pop[a]));
+ const eaten=idx.slice(0,Q),rest=shuffle(idx.slice(Q)),killed=rest.slice(0,Q),surv=rest.slice(Q);
+ const marks={};eaten.forEach(i=>marks[i]='eaten');killed.forEach(i=>marks[i]='random');
+ const s=shuffle(surv.map(i=>pop[i])),next=[];
+ for(let k=0;k<s.length;k+=2){const a=s[k],b=s[k+1];next.push(child(a,b),child(b,a),child(a,b),child(b,a))}
+ return{marks,next}}
+function step(){const{marks,next}=generation();render(marks);setTimeout(()=>{pop=shuffle(next);gen++;render()},1500)}
+function multi(){const n=+document.getElementById('n').value||1;for(let i=0;i<n;i++){pop=shuffle(generation().next);gen++}render()}
+document.getElementById('step').onclick=step;document.getElementById('multi').onclick=multi;document.getElementById('reset').onclick=reset;
+document.getElementById('bgs').oninput=e=>setBg(Math.round(e.target.value/255*MAX));
+document.getElementById('rbg').onclick=()=>setBg(rnd());
+reset();
+</script></body></html>
