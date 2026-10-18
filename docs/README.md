@@ -11,7 +11,7 @@ This app stages that trial. A **population of 32 creatures** is laid out in a gr
 1. **A predator eats the 8 most visible creatures**, the ones whose coloring lies farthest from the background. The predator, a **red finch**, flies to each in turn, a songbird like those Kettlewell watched taking moths from tree trunks; on the Squirts page, where the prey are squid, it is a **red perch** that swims to them.
 2. **8 more die at random**, whatever their color, because fortune keeps no ledger of merit. A **black skull stamp**, outlined in white, slams down on each, one at a time.
 3. **The 16 survivors are shuffled and paired.** Each pair has four children, so the population is back to 32. Each child takes one gene from one parent and the other gene from the other parent (what those genes are depends on the page; see below).
-4. **Mutation** (if it is on): each child has a 30% chance of a small random change to its genes.
+4. **Mutation** (if it is on): each child has a chance, 30% unless you change it, of a small random change to its genes.
 
 Over the generations the population drifts toward the background color. Nobody steers it; selection does the work. That is the whole lesson.
 
@@ -45,7 +45,8 @@ On the Spots page a mutation changes the shade gene (70% chance) and flips 1–3
 - **Run N generations** (`#multi`): Runs that many generations at once with no marks and no pause, then shows only the final population. Very large numbers can make the page pause for a moment, especially on the Spots page.
 - **Sound** (`#sound`): A button that reads **Sound off** when the page loads, because browsers stay silent until you click. Click it to read **Sound on**, and each **Next generation** gains a voice: bird chirps as the finch makes its rounds (perch sounds on Squirts), and a thump as each skull stamp lands. Click again to silence it. **Run N generations** is always silent, and so is everything when your system asks for reduced motion.
 - **Reset** (`#reset`): Starts over: a new random background, 32 new random creatures, generation back to 0.
-- **Mutation** (`#mut`): A checkbox, **on** by default. When on, each child has a 30% chance of a small random change to its genes. When off, children only recombine their parents' genes, so the population can never get closer than the best mix of genes already present.
+- **Mutation** (`#mut`): A checkbox, **on** by default. When on, each child has a chance of a small random change to its genes; the Rate slider beside it sets how great a chance. When off, children only recombine their parents' genes, so the population can never get closer than the best mix of genes already present.
+- **Mutation rate** (`#mutrate`): A slider beside the checkbox, labeled **Rate** with the current value (for example *Rate 30%*). It runs from 0 to 100% in steps of 5, and starts at 30%. A change takes hold from the next generation, without a reset. It is dimmed while Mutation is off. Set it low and the population creeps toward the background on the strength of what it already carries; set it high and every brood is shaken by fresh novelty, some of it ruinous.
 - **Version links**: Links to the other pages (Color, Monochrome, Spots, Squirts). Each page starts fresh; nothing carries over.
 
 ### Spots page only

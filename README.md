@@ -17,7 +17,7 @@ For the full user guide (every control, what to watch for, and tips), see **[doc
 
 ## The four versions
 
-| Page | Creatures | Genes | Child inherits | Mutation (30% of children, when on) |
+| Page | Creatures | Genes | Child inherits | Mutation (when on; 30% of children by default) |
 |---|---|---|---|---|
 | [`index.html`](index.html) (Color) | Full-color butterflies | 24-bit RGB color | Hue from one parent; saturation and value from the other | Hue ±20°, saturation and value ±0.075 each |
 | [`mono.html`](mono.html) (Monochrome) | Gray moths, drawn as a peppered moth (*Biston betularia*; [`design/moth.svg`](design/moth.svg)) | One 32-bit number (`00000000`–`FFFFFFFF`), drawn as gray | High 16 bits from one parent; low 16 bits from the other | Gene shifted by up to ±2²⁶ |
@@ -39,6 +39,7 @@ Extra controls:
 | **Sound on / Sound off** | Toggles sound for **Next generation**: bird chirps as the finch hunts (perch sounds on Squirts) and a thump as each skull stamp lands. Off by default, because browsers don't play audio until you click. Run N generations and reduced motion are always silent. |
 | **Reset** | Starts over with a new random background, a new random population, and generation 0. |
 | **Mutation** (on by default) | Turns mutation on or off. |
+| **Rate** slider (default 30%) | Sets each child's chance of mutation, 0 to 100% in steps of 5. Takes effect from the next generation without a reset; dimmed while Mutation is off. |
 | Version links | Switch pages. Each page starts fresh. |
 
 **% match labels.** Under each creature is its match to the background, rounded to one decimal place. **100% means identical.**
@@ -58,7 +59,7 @@ Each generation, on every page:
 1. **Predation:** the creatures are ranked by distance from the background, and the **8 most distant** are eaten.
 2. **Random death:** **8 more** of the remaining 24 die at random.
 3. **Breeding:** the **16 survivors** are shuffled into 8 pairs. Each pair (A, B) has **4 children**: two take gene 1 from A and gene 2 from B, and two the other way around. That brings the population back to 32, and it is shuffled again before display.
-4. **Mutation:** if **Mutation** is checked, each child has a **30% chance** of a small random change (see the table above).
+4. **Mutation:** if **Mutation** is checked, each child has a chance of a small random change (see the table above). The **Rate** slider sets that chance from 0 to 100%; the default is **30%**.
 
 On the Spots page the predator judges only the **area-weighted average gray** of the moth. That average is sampled over the whole moth outline (wings and body, but not the legs and antennae), using the topmost spot (or white) at each point. Each spot's center is drawn on the left half (y 20–62) and redrawn, up to 50 tries, until it falls inside the moth outline; the spot is then mirrored onto the right half. Very different patterns can therefore be equally well hidden.
 

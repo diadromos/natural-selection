@@ -8,7 +8,8 @@
   "#n": "How many generations \"Run N generations\" will run. Ten by default.",
   "#multi": "Run the number of generations in the box at once, with no marks, and show only the result.",
   "#reset": "Start over with a new random background, a new random population, and generation 0.",
-  "#mut": "When checked, each child has a 30% chance of a small change to its genes. Uncheck to allow only recombination.",
+  "#mut": "When checked, each child has a chance, set by the Rate slider (30% by default), of a small change to its genes. Uncheck to allow only recombination.",
+  "#mutrate": "Chance that each child gets a small random change to its genes, from 0 to 100% in steps of 5. Default 30%. Takes effect from the next generation, no reset needed. Dimmed while Mutation is off.",
   "#bglabel": {
     "index.html": "The background color as #RRGGBB. Each creature's color is measured against it.",
     "mono.html": "The background gene as a 32-bit number in hex, drawn as gray. Creatures are judged against it.",

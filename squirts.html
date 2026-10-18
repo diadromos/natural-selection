@@ -17,7 +17,8 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <input id="n" title="How many generations &quot;Run N generations&quot; will run. Ten by default." type="number" value="10" min="1">
 <button id="multi" title="Run the number of generations in the box at once, with no marks, and show only the result.">Run N generations</button>
 <button id="reset" title="Start over with a new random background, a new random population, and generation 0.">Reset</button>
-<label><input type="checkbox" id="mut" title="When checked, each child has a 30% chance of a small change to its genes. Uncheck to allow only recombination." checked> Mutation</label>
+<label><input type="checkbox" id="mut" title="When checked, each child has a chance, set by the Rate slider (30% by default), of a small change to its genes. Uncheck to allow only recombination." checked> Mutation</label>
+<span class="mutrate"><label for="mutrate" id="mutratelabel" title="Chance that each child gets a small random change to its genes, from 0 to 100% in steps of 5. Default 30%. Takes effect from the next generation, no reset needed. Dimmed while Mutation is off.">Rate 30%</label><input type="range" id="mutrate" min="0" max="100" step="5" value="30" title="Chance that each child gets a small random change to its genes, from 0 to 100% in steps of 5. Default 30%. Takes effect from the next generation, no reset needed. Dimmed while Mutation is off."></span>
 <button id="sound" type="button" aria-pressed="false" title="Turn sound on or off. When on, Next generation plays perch sounds as the fish hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.">Sound off</button>
 </div>
 <div class="controls"><label>Hue <input type="range" id="hue" title="Set the background hue around the color wheel, 0 to 360. It changes right away, without a reset." min="0" max="360" style="background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)"></label> <label>Value <input type="range" id="val" title="Move the background from white (0) through full hue (50) to black (100). It changes right away." min="0" max="100"></label></div>
@@ -40,7 +41,7 @@ function fromHSV(h,s,v){let c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c,[r,g,b]=h<6
 function dist(a,b){const A=rgb(a),B=rgb(b);return Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2])}
 const clamp=x=>Math.min(1,Math.max(0,x));
 function child(hp,vp){let{h}=toHSV(hp),{s,v}=toHSV(vp);
- if(document.getElementById('mut').checked&&Math.random()<.3){h=(h+(Math.random()-.5)*40+360)%360;s=clamp(s+(Math.random()-.5)*.15);v=clamp(v+(Math.random()-.5)*.15)}
+ if(document.getElementById('mut').checked&&Math.random()<+document.getElementById('mutrate').value/100){h=(h+(Math.random()-.5)*40+360)%360;s=clamp(s+(Math.random()-.5)*.15);v=clamp(v+(Math.random()-.5)*.15)}
  return fromHSV(h,s,v)}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 function reset(){bg=rnd();syncSliders();pop=Array.from({length:N},rnd);gen=0;render()}
@@ -81,5 +82,8 @@ function updVal(){const h=+document.getElementById('hue').value,p=hex(fromHSV(h%
 let lastMarks={};
 function onSlide(){updVal();bg=sliderColor(+document.getElementById('hue').value,+document.getElementById('val').value);render(lastMarks)}
 document.getElementById('hue').oninput=onSlide;document.getElementById('val').oninput=onSlide;
+// Mutation rate slider (#mutrate): read in child() at breeding time, so a change applies from the next generation; dimmed while #mut is off.
+{const m=document.getElementById('mut'),r=document.getElementById('mutrate'),l=document.getElementById('mutratelabel');
+ r.oninput=()=>{l.textContent='Rate '+r.value+'%'};m.addEventListener('change',()=>{r.disabled=!m.checked;r.parentNode.classList.toggle('off',!m.checked)});m.dispatchEvent(new Event('change'));r.oninput()}
 reset();
 </script></body></html>
