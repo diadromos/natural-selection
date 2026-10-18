@@ -8,10 +8,10 @@ There is, in every patch of ground and every reach of open water, a quiet and un
 
 This app stages that trial. A **population of 32 creatures** is laid out in a grid of 4 rows by 8 columns, set against a colored **background**. Each generation:
 
-1. **A predator eats the 8 most visible creatures**, the ones whose coloring lies farthest from the background. They are marked with a **red bird outline**, a songbird like those Kettlewell watched taking moths from tree trunks; on the Squirts page, where the prey are squid, it is a **red fish**.
-2. **8 more die at random**, whatever their color, because fortune keeps no ledger of merit. They are marked with a **yellow skull and crossbones**.
+1. **A predator eats the 8 most visible creatures**, the ones whose coloring lies farthest from the background. The predator, a **red finch**, flies to each in turn, a songbird like those Kettlewell watched taking moths from tree trunks; on the Squirts page, where the prey are squid, it is a **red perch** that swims to them.
+2. **8 more die at random**, whatever their color, because fortune keeps no ledger of merit. A **black skull stamp**, outlined in white, slams down on each, one at a time.
 3. **The 16 survivors are shuffled and paired.** Each pair has four children, so the population is back to 32. Each child takes one gene from one parent and the other gene from the other parent (what those genes are depends on the page; see below).
-4. **Mutation** (if it is on): each child has a 30% chance of a small random change to its genes.
+4. **Mutation** (if it is on): each child has a chance, 30% unless you change it, of a small random change to its genes.
 
 Over the generations the population drifts toward the background color. Nobody steers it; selection does the work. That is the whole lesson.
 
@@ -32,7 +32,7 @@ On the Spots page a mutation changes the shade gene (70% chance) and flips 1–3
 
 1. Serve the folder (it is served now at `http://127.0.0.1:8766/`) and open `index.html`, or whichever page you want.
 2. On load, the app gives you a random background and 32 random creatures, at **Generation 0**.
-3. Press **Next generation** and watch it happen: the marks appear for about one and a half seconds, then the survivors' children take their places.
+3. Press **Next generation** and watch it happen: the predator makes its rounds and the skulls come down, which takes about six or seven seconds, then the survivors' children take their places.
 4. Once you have seen the mechanism, set a number in the box and press **Run N generations** to go much faster.
 5. Watch the **Avg distance from background** number below the grid fall.
 
@@ -40,11 +40,13 @@ On the Spots page a mutation changes the shade gene (70% chance) and flips 1–3
 
 ### On every page
 
-- **Next generation** (`#step`): Runs one generation with the marks shown. The eaten are marked with a red bird (a red fish on Squirts), the unlucky with a yellow skull, for 1.5 seconds; then the grid is redrawn with the new brood and the generation count goes up by one. Wait for the redraw before pressing again.
+- **Next generation** (`#step`): Runs one generation with the marks shown. The red finch (a red perch on Squirts) visits each creature it eats, and a black skull stamps down on each one lost to chance, over about 6 to 7 seconds, with the controls locked meanwhile; then the grid is redrawn with the new brood and the generation count goes up by one. Wait for the redraw before pressing again. If your system asks for reduced motion, the predator does not fly or swim and the stamps do not slam: the marks and skulls appear all at once, and the new brood follows after about one and a half seconds.
 - **Generation count box** (`#n`): A number field, set to **10** by default (minimum 1). It sets how many generations the next button runs. An empty or zero value counts as 1.
 - **Run N generations** (`#multi`): Runs that many generations at once with no marks and no pause, then shows only the final population. Very large numbers can make the page pause for a moment, especially on the Spots page.
+- **Sound** (`#sound`): A button that reads **Sound off** when the page loads, because browsers stay silent until you click. Click it to read **Sound on**, and each **Next generation** gains a voice: bird chirps as the finch makes its rounds (perch sounds on Squirts), and a thump as each skull stamp lands. Click again to silence it. **Run N generations** is always silent, and so is everything when your system asks for reduced motion.
 - **Reset** (`#reset`): Starts over: a new random background, 32 new random creatures, generation back to 0.
-- **Mutation** (`#mut`): A checkbox, **on** by default. When on, each child has a 30% chance of a small random change to its genes. When off, children only recombine their parents' genes, so the population can never get closer than the best mix of genes already present.
+- **Mutation** (`#mut`): A checkbox, **on** by default. When on, each child has a chance of a small random change to its genes; the Rate slider beside it sets how great a chance. When off, children only recombine their parents' genes, so the population can never get closer than the best mix of genes already present.
+- **Mutation rate** (`#mutrate`): A slider beside the checkbox, labeled **Rate** with the current value (for example *Rate 30%*). It runs from 0 to 100% in steps of 5, and starts at 30%. A change takes hold from the next generation, without a reset. It is dimmed while Mutation is off. Set it low and the population creeps toward the background on the strength of what it already carries; set it high and every brood is shaken by fresh novelty, some of it ruinous.
 - **Version links**: Links to the other pages (Color, Monochrome, Spots, Squirts). Each page starts fresh; nothing carries over.
 
 ### Spots page only
@@ -71,7 +73,7 @@ On Reset, both sliders move to match the new random background.
 ## What to Watch For
 
 - **The fall of the distance figure.** It usually drops quickly over the first few dozen generations, then levels off as the creatures get close to the background.
-- **The bird at work.** In single steps, notice that the ones under the red bird are always the most conspicuous, while the skulls fall anywhere, sometimes on the best-hidden creatures. Selection works on averages, not on individuals.
+- **The bird at work.** In single steps, notice that the ones the red finch visits are always the most conspicuous, while the skulls fall anywhere, sometimes on the best-hidden creatures. Selection works on averages, not on individuals.
 - **Mutation turned off.** Reset, uncheck Mutation, and run a hundred generations. The population gets stuck at the best combination its starting genes allow. Turn mutation back on and it starts creeping closer again.
 - **A change of scene.** On the Spots or Squirts pages, let a population adapt, then move the background slider. The distance figure jumps, and the population has to adapt again.
 - **Spots that hide by average.** On the Spots page the predator judges only the overall average gray of the moth (wings and body), so very different spot patterns can be equally well hidden.

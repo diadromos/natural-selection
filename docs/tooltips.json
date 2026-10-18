@@ -1,14 +1,15 @@
 {
   "#step": {
-    "index.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
-    "mono.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
-    "spots.html": "Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.",
-    "squirts.html": "Run one generation. A red fish marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed."
+    "index.html": "Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.",
+    "mono.html": "Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.",
+    "spots.html": "Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.",
+    "squirts.html": "Run one generation. The red perch swims to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion."
   },
   "#n": "How many generations \"Run N generations\" will run. Ten by default.",
   "#multi": "Run the number of generations in the box at once, with no marks, and show only the result.",
   "#reset": "Start over with a new random background, a new random population, and generation 0.",
-  "#mut": "When checked, each child has a 30% chance of a small change to its genes. Uncheck to allow only recombination.",
+  "#mut": "When checked, each child has a chance, set by the Rate slider (30% by default), of a small change to its genes. Uncheck to allow only recombination.",
+  "#mutrate": "Chance that each child gets a small random change to its genes, from 0 to 100% in steps of 5. Default 30%. Takes effect from the next generation, no reset needed. Dimmed while Mutation is off.",
   "#bglabel": {
     "index.html": "The background color as #RRGGBB. Each creature's color is measured against it.",
     "mono.html": "The background gene as a 32-bit number in hex, drawn as gray. Creatures are judged against it.",
@@ -37,5 +38,11 @@
   },
   "#val": {
     "squirts.html": "Move the background from white (0) through full hue (50) to black (100). It changes right away."
+  },
+  "#sound": {
+    "index.html": "Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.",
+    "mono.html": "Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.",
+    "spots.html": "Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.",
+    "squirts.html": "Turn sound on or off. When on, Next generation plays perch sounds as the fish hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent."
   }
 }

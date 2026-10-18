@@ -138,3 +138,18 @@ body>p:not(:has(a)){max-width:none!important;font-size:14px!important;line-heigh
   button:hover{filter:brightness(1.08)}
 }
 
+
+/* sound toggle (#sound): off by default; speaker icon is a background image so the accessible name stays "Sound off/on" */
+#sound{flex:0 0 auto;padding:0 16px 0 40px!important;color:var(--muted);background-color:var(--card2);
+  background-repeat:no-repeat;background-position:14px 50%;background-size:18px 18px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a7a9b1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9h4l5-4v14l-5-4H4z' fill='%23a7a9b1'/%3E%3Cpath d='M17 9l5 6M22 9l-5 6'/%3E%3C/svg%3E")}
+#sound[aria-pressed='true']{color:var(--accent);background-color:rgba(127,212,168,.16);box-shadow:inset 0 0 0 2px var(--accent),var(--shadow);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237fd4a8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9h4l5-4v14l-5-4H4z' fill='%237fd4a8'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13'/%3E%3C/svg%3E")}
+
+/* mutation rate slider (#mutrate): sits beside the Mutation toggle; "Rate N%" label + slider share one row.
+   Dimmed while Mutation is off (input disabled, wrapper .off). */
+.mutrate{display:inline-flex;align-items:center;gap:10px;margin-left:8px;flex:1 1 180px;min-width:0;min-height:var(--tap)}
+.mutrate label{min-width:5.2em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mutrate input[type=range]{flex:1 1 auto;width:auto!important;min-width:80px}
+.mutrate.off{opacity:.45}
+.mutrate input[type=range]:disabled{cursor:not-allowed}

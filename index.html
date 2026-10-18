@@ -13,17 +13,20 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <link rel="stylesheet" href="design/mobile.css"></head><body>
 <h2>Natural Selection: Camouflage</h2>
 <div class="controls">
-<button id="step" title="Run one generation. A red bird marks those the predator takes and a yellow skull those lost to chance, for a moment; then the survivors breed.">Next generation</button>
+<button id="step" title="Run one generation. The red finch flies to each creature the predator takes, and a black skull stamps down on each one lost to chance; then the survivors breed. Takes about 6 to 7 seconds, or about 1.5 with reduced motion.">Next generation</button>
 <input id="n" title="How many generations &quot;Run N generations&quot; will run. Ten by default." type="number" value="10" min="1">
 <button id="multi" title="Run the number of generations in the box at once, with no marks, and show only the result.">Run N generations</button>
 <button id="reset" title="Start over with a new random background, a new random population, and generation 0.">Reset</button>
-<label><input type="checkbox" id="mut" title="When checked, each child has a 30% chance of a small change to its genes. Uncheck to allow only recombination." checked> Mutation</label>
+<label><input type="checkbox" id="mut" title="When checked, each child has a chance, set by the Rate slider (30% by default), of a small change to its genes. Uncheck to allow only recombination." checked> Mutation</label>
+<span class="mutrate"><label for="mutrate" id="mutratelabel" title="Chance that each child gets a small random change to its genes, from 0 to 100% in steps of 5. Default 30%. Takes effect from the next generation, no reset needed. Dimmed while Mutation is off.">Rate 30%</label><input type="range" id="mutrate" min="0" max="100" step="5" value="30" title="Chance that each child gets a small random change to its genes, from 0 to 100% in steps of 5. Default 30%. Takes effect from the next generation, no reset needed. Dimmed while Mutation is off."></span>
+<button id="sound" type="button" aria-pressed="false" title="Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.">Sound off</button>
 </div>
 <div id="bglabel" title="The background color as #RRGGBB. Each creature&#x27;s color is measured against it."></div>
 <div id="grid"></div>
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
-<p style="font-size:13px;color:#aaa">Each generation, a predator bird eats the 8 most visible organisms (red bird), 8 more die at random (skull and crossbones), and the 16 survivors pair up. Each child gets the hue of one parent and the value (brightness/saturation) of the other.</p>
+<p style="font-size:13px;color:#aaa">Each generation, a predator bird eats the 8 most visible organisms (red finch), 8 more die at random (black skull stamp), and the 16 survivors pair up. Each child gets the hue of one parent and the value (brightness/saturation) of the other.</p>
 <p class="nav"><a href="index.html" class="active" aria-current="page">Color</a><a href="mono.html" title="Go to the Monochrome version: gray moths with 32-bit genes.">Mono</a><a href="spots.html" title="Go to the Spots version: white moths with gray spots.">Spots</a><a href="squirts.html" title="Go to the Squirts version: squid in full color.">Squirts</a></p>
+<script src="design/predator-anim/predator-svgs.js"></script><script src="design/predator-anim/predator-anim.js"></script><script src="design/stamp/stamp-svgs.js"></script><script src="design/stamp-anim/stamp.js"></script><script src="design/sounds/sfx.js"></script>
 <script>
 const N=32,Q=N/4;let bg,pop,gen;
 const rnd=()=>Math.floor(Math.random()*0x1000000);
@@ -37,13 +40,13 @@ function fromHSV(h,s,v){let c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c,[r,g,b]=h<6
 function dist(a,b){const A=rgb(a),B=rgb(b);return Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2])}
 const clamp=x=>Math.min(1,Math.max(0,x));
 function child(hp,vp){let{h}=toHSV(hp),{s,v}=toHSV(vp);
- if(document.getElementById('mut').checked&&Math.random()<.3){h=(h+(Math.random()-.5)*40+360)%360;s=clamp(s+(Math.random()-.5)*.15);v=clamp(v+(Math.random()-.5)*.15)}
+ if(document.getElementById('mut').checked&&Math.random()<+document.getElementById('mutrate').value/100){h=(h+(Math.random()-.5)*40+360)%360;s=clamp(s+(Math.random()-.5)*.15);v=clamp(v+(Math.random()-.5)*.15)}
  return fromHSV(h,s,v)}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 function reset(){bg=rnd();pop=Array.from({length:N},rnd);gen=0;render()}
 function lblColor(h){const L=[1,3,5].map(i=>{const c=parseInt(h.substr(i,2),16)/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4}),Y=.2126*L[0]+.7152*L[1]+.0722*L[2];return (Y+.05)/.05>=1.05/(Y+.05)?'#000':'#fff'}
 function render(marks={}){const g=document.getElementById('grid');document.getElementById('bglabel').textContent='Background: '+hex(bg);g.style.background=hex(bg);g.style.color=lblColor(hex(bg));g.innerHTML='';
- pop.forEach((c,i)=>{const d=document.createElement('div');d.className='org '+(marks[i]||'');d.title="A butterfly and how closely it matches the background, from 0 to 100%. The least hidden are eaten; a child takes the hue of one parent and the saturation and value of the other.";const f=hex(c);d.innerHTML=`<svg viewBox='0 0 100 80'><g fill='${f}' stroke='#0005' stroke-width='1.5'><path d='M50 39 C36 -6,-6 -4,2 26 C5 44,30 48,50 41Z'/><path d='M50 39 C64 -6,106 -4,98 26 C95 44,70 48,50 41Z'/><path d='M50 41 C28 38,2 52,12 70 C22 86,46 70,50 45Z'/><path d='M50 41 C72 38,98 52,88 70 C78 86,54 70,50 45Z'/></g><ellipse cx='50' cy='42' rx='3' ry='18' fill='#333'/><path d='M49 25 Q44 10 38 6 M51 25 Q56 10 62 6' stroke='#333' stroke-width='1.5' fill='none'/></svg><span>${(100*(1-(dist(c,bg)/(255*Math.sqrt(3))))).toFixed(1)}%</span>`+(marks[i]=='eaten'?`<div class='mark'><svg viewBox='0 0 80 80' width='80' height='80'><g fill='none' stroke='#000' stroke-opacity='.55' stroke-width='6.5' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='3.6' fill='#000' fill-opacity='.55' stroke='none'/></g><g fill='none' stroke='#e00' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='2' fill='#e00' stroke='none'/></g></svg></div>`:marks[i]=='random'?`<div class='mark'><svg viewBox='0 0 80 80' width='80' height='80' fill='none' stroke='#ff0' stroke-width='2.5' stroke-linecap='round'><path d='M40 12 C24 12 18 24 18 34 C18 42 24 46 26 48 L26 56 L54 56 L54 48 C56 46 62 42 62 34 C62 24 56 12 40 12Z'/><circle cx='32' cy='34' r='5'/><circle cx='48' cy='34' r='5'/><path d='M40 40 L37 46 L43 46Z'/><path d='M34 56 L34 50 M40 56 L40 50 M46 56 L46 50'/><path d='M10 60 L70 76 M70 60 L10 76'/></svg></div>`:'');g.appendChild(d)});
+ pop.forEach((c,i)=>{const d=document.createElement('div');d.className='org '+(marks[i]||'');d.title="A butterfly and how closely it matches the background, from 0 to 100%. The least hidden are eaten; a child takes the hue of one parent and the saturation and value of the other.";const f=hex(c);d.innerHTML=`<svg viewBox='0 0 100 80'><g fill='${f}' stroke='#0005' stroke-width='1.5'><path d='M50 39 C36 -6,-6 -4,2 26 C5 44,30 48,50 41Z'/><path d='M50 39 C64 -6,106 -4,98 26 C95 44,70 48,50 41Z'/><path d='M50 41 C28 38,2 52,12 70 C22 86,46 70,50 45Z'/><path d='M50 41 C72 38,98 52,88 70 C78 86,54 70,50 45Z'/></g><ellipse cx='50' cy='42' rx='3' ry='18' fill='#333'/><path d='M49 25 Q44 10 38 6 M51 25 Q56 10 62 6' stroke='#333' stroke-width='1.5' fill='none'/></svg><span>${(100*(1-(dist(c,bg)/(255*Math.sqrt(3))))).toFixed(1)}%</span>`+(marks[i]=='eaten'?`<div class='mark'><svg viewBox='0 0 80 80' width='80' height='80'><g fill='none' stroke='#000' stroke-opacity='.55' stroke-width='6.5' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='3.6' fill='#000' fill-opacity='.55' stroke='none'/></g><g fill='none' stroke='#e00' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='2' fill='#e00' stroke='none'/></g></svg></div>`:marks[i]=='random'?stampMark(i):'');g.appendChild(d)});
  const avg=pop.reduce((s,c)=>s+dist(c,bg),0)/N;
  document.getElementById('stats').innerHTML=`Generation ${gen} | Avg distance from background: ${avg.toFixed(1)}`}
 function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b],bg)-dist(pop[a],bg));
@@ -52,8 +55,26 @@ function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b],bg)-dist(p
  const s=shuffle(surv.map(i=>pop[i])),next=[];
  for(let k=0;k<s.length;k+=2){const a=s[k],b=s[k+1];next.push(child(a,b),child(b,a),child(a,b),child(b,a))}
  return{marks,next}}
-function step(){const{marks,next}=generation();render(marks);setTimeout(()=>{pop=shuffle(next);gen++;render()},1500)}
+// Animated kill step (design/predator-anim/MOTION-SPEC.md). Selection/breeding unchanged; only timing+visuals.
+const STEP_PAUSE=800,STEP_STATIC=1500;let stepBusy=false;
+// Random-death rubber stamps (design/stamp-anim/stamp.js; timing from design/stamp/STAMP-SPEC.md). ms / px / deg.
+// 8 stamps land one by one across the predator run: start + 7*gap + drop+squash+settle = 150+4200+480 = 4830ms, before the predator's exit starts (5440-520 = 4920ms).
+const STAMP={start:150,gap:600,drop:240,squash:80,settle:160,scale:1.8,lift:18,tilt:12,offset:4,shake:1.5,spread:true,dropEase:'cubic-bezier(.55,0,1,.45)'};
+function lockUI(on){['step','multi','reset','bgs','rbg','hue','val'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=on})}
+async function step(){if(stepBusy)return;stepBusy=true;lockUI(true);
+ const{marks,next}=generation();render(marks);
+ const eaten=Object.keys(marks).filter(i=>marks[i]=='eaten').map(Number),rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const randomIdx=Object.keys(marks).filter(i=>marks[i]=='random').map(Number);
+ if(window.SFX)SFX.scheduleRun('bird',eaten.length,randomIdx.length,STAMP); // sounds on the same clock as the animations (design/sounds/SOUND-NOTES.md)
+ const stamps=window.stampMarks?stampMarks(document.getElementById('grid'),randomIdx,STAMP).catch(e=>console.error(e)):null;
+ try{if(window.animatePredator)await animatePredator(document.getElementById('grid'),eaten,'bird')}catch(e){console.error(e)}
+ await stamps;
+ setTimeout(()=>{pop=shuffle(next);gen++;render();stepBusy=false;lockUI(false)},rm?STEP_STATIC:STEP_PAUSE)}
 function multi(){const n=+document.getElementById('n').value||1;for(let i=0;i<n;i++){pop=shuffle(generation().next);gen++}render()}
 document.getElementById('step').onclick=step;document.getElementById('multi').onclick=multi;document.getElementById('reset').onclick=reset;
+const snd=document.getElementById('sound');snd.onclick=()=>{const on=snd.getAttribute('aria-pressed')!=='true';snd.setAttribute('aria-pressed',String(on));snd.textContent=on?'Sound on':'Sound off';if(window.SFX)SFX.setEnabled(on)};
+// Mutation rate slider (#mutrate): read in child() at breeding time, so a change applies from the next generation; dimmed while #mut is off.
+{const m=document.getElementById('mut'),r=document.getElementById('mutrate'),l=document.getElementById('mutratelabel');
+ r.oninput=()=>{l.textContent='Rate '+r.value+'%'};m.addEventListener('change',()=>{r.disabled=!m.checked;r.parentNode.classList.toggle('off',!m.checked)});m.dispatchEvent(new Event('change'));r.oninput()}
 reset();
 </script></body></html>
