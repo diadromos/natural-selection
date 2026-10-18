@@ -20,61 +20,86 @@
   const ease = bez(...SWOOP);
   const q = (a, c, b, u) => (1 - u) * (1 - u) * a + 2 * (1 - u) * u * c + u * u * b; // quadratic bezier
 
+  // Ken: the layer lives INSIDE the grid (position:absolute, anchored to the grid's padding box; the grid is made
+  // position:relative) and every coordinate is grid-relative, from offsetLeft/offsetTop/offsetWidth. Page scrolling
+  // moves the grid, the layer and the bird together, so the run can't drift out of sync. On resize (grid or window)
+  // the path is recomputed and swapped into the running animation with setKeyframes(): same times, new positions.
+  // The layer reaches past the grid to the viewport's left/right edges (and 2 bird-sizes above/below) and clips
+  // there, so the bird enters/exits off-screen as before without widening the page.
   window.animatePredator = function (grid, eatenIdx, kind = 'bird') {
     if (!eatenIdx.length || matchMedia('(prefers-reduced-motion: reduce)').matches) return Promise.resolve(); // static marks stay
-    const cells = [...grid.children], vw = innerWidth;
-    const targets = [...eatenIdx].sort((a, b) => a - b).map(i => {   // reading order
-      const r = cells[i].getBoundingClientRect(); return { i, x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width };
-    });
-    const size = Math.min(96, targets[0].w * 0.95), k = size / 80;
-    const [mx, my] = MOUTH[kind].map(v => v * k);
-    const g = grid.getBoundingClientRect();
-    const start = { x: -size, y: Math.max(-size, g.top - size * 1.5) };          // offscreen top-left
-    const last = targets[targets.length - 1];
-    const end = { x: last.x > vw / 2 ? vw + size : -size, y: last.y - size * 2 };  // off the far edge
+    const cells = [...grid.children], order = [...eatenIdx].sort((a, b) => a - b);   // reading order
+    if (getComputedStyle(grid).position === 'static') grid.style.position = 'relative';
 
-    // overlay + predator element
     const layer = document.createElement('div');
     layer.id = 'predator-layer'; // Ken: an id keeps mobile.css's body>div:not([id]) panel style (opaque background) off the overlay
-    layer.style.cssText = 'position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:50';
+    layer.style.cssText = 'position:absolute;overflow:hidden;pointer-events:none;z-index:50;margin:0;padding:0';
     const el = document.createElement('div');
-    el.style.cssText = `position:absolute;left:0;top:0;width:${size}px;height:${size}px;transform-origin:0 0`;
+    el.style.cssText = 'position:absolute;left:0;top:0;transform-origin:0 0';
     el.innerHTML = window.PREDATOR_SVGS[kind];
-    el.firstElementChild.setAttribute('width', size); el.firstElementChild.setAttribute('height', size);
-    layer.appendChild(el); document.body.appendChild(layer);
+    layer.appendChild(el); grid.appendChild(layer);   // appended last: grid.children[0..31] are still the cells
 
-    // ---- build one timeline: segments (move) and holds (grab)
-    const pts = [start, ...targets, end], kf = [], frames = [], gulps = [];
-    let t = 0, face = 1;
-    const push = (x, y, rot, s, time) => kf.push({ time, transform:
-      `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${(s * face * FACES[kind]).toFixed(3)},${s}) translate(${-mx}px,${-my}px)` });
-    for (let s = 0; s < pts.length - 1; s++) {
-      const a = pts[s], b = pts[s + 1], dur = s === 0 ? T.entry : s === pts.length - 2 ? T.exit : T.hop;
-      const dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy) || 1;
-      face = dx >= 0 ? 1 : -1;
-      const dip = kind === 'bird' ? 0.25 * dist + 20 * k : 0.08 * dist;              // swoop below the straight line
-      const cx = (a.x + b.x) / 2, cy = Math.max(a.y, b.y) + dip;
-      const N = 12; let px = a.x, py = a.y;
-      for (let n = 0; n <= N; n++) {
-        const u = ease(n / N);
-        let x = q(a.x, cx, b.x, u), y = q(a.y, cy, b.y, u);
-        if (kind === 'fish') { const w = 6 * k * Math.sin(2 * Math.PI * u) * Math.sin(Math.PI * u); x += -dy / dist * w; y += dx / dist * w; }
-        let ang = n ? Math.atan2(y - py, x - px) * 180 / Math.PI : Math.atan2(dy, dx) * 180 / Math.PI;
-        if (face < 0) ang -= 180; ang = ((ang + 540) % 360) - 180;
-        const rot = Math.max(-25, Math.min(25, ang * (kind === 'bird' ? 0.3 : 1)));
-        if (n || s === 0) push(x, y, rot, 1, t + dur * n / N);
-        px = x; py = y;
+    // ---- geometry (grid-relative px) -> keyframes; rebuilt on resize, timing never changes
+    let kf, frames, gulps, total, geo;
+    function build() {
+      const cl = grid.clientLeft, ct = grid.clientTop;    // offsets are from the padding edge; layer origin is the padding box
+      const targets = order.map(i => { const c = cells[i];
+        return { i, x: c.offsetLeft + c.offsetWidth / 2, y: c.offsetTop + c.offsetHeight / 2, w: c.offsetWidth }; });
+      const size = Math.min(96, targets[0].w * 0.95), k = size / 80;
+      const [mx, my] = MOUTH[kind].map(v => v * k);
+      const W = grid.clientWidth, H = grid.clientHeight, gr = grid.getBoundingClientRect();
+      const L = Math.max(0, gr.left + cl), R = Math.max(0, document.documentElement.clientWidth - (gr.left + cl + W)); // horizontal gaps from the grid's padding box to the viewport sides: only size the clip box (no vertical/scroll dependence)
+      const PT = size * 2, PB = size * 2;
+      Object.assign(layer.style, { left: -L + 'px', top: -PT + 'px', width: W + L + R + 'px', height: H + PT + PB + 'px' });
+      el.style.width = el.style.height = size + 'px';
+      el.firstElementChild.setAttribute('width', size); el.firstElementChild.setAttribute('height', size);
+      const start = { x: -L - size, y: -size * 1.5 };      // off the left edge of the viewport, above the grid
+      const last = targets[targets.length - 1];
+      const end = { x: last.x > W / 2 ? W + R + size : -L - size, y: last.y - size * 2 };  // off the far edge
+      // layer-local = grid-local + (L, PT)
+      const pts = [start, ...targets, end].map(p => Object.assign({}, p, { x: p.x + L, y: p.y + PT }));
+      kf = []; frames = []; gulps = [];
+      let t = 0, face = 1;
+      const push = (x, y, rot, s, time) => kf.push({ time, transform:
+        `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) rotate(${rot.toFixed(1)}deg) scale(${(s * face * FACES[kind]).toFixed(3)},${s}) translate(${-mx}px,${-my}px)` });
+      for (let s = 0; s < pts.length - 1; s++) {
+        const a = pts[s], b = pts[s + 1], dur = s === 0 ? T.entry : s === pts.length - 2 ? T.exit : T.hop;
+        const dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy) || 1;
+        face = dx >= 0 ? 1 : -1;
+        const dip = kind === 'bird' ? 0.25 * dist + 20 * k : 0.08 * dist;              // swoop below the straight line
+        const cx = (a.x + b.x) / 2, cy = Math.max(a.y, b.y) + dip;
+        const N = 12; let px = a.x, py = a.y;
+        for (let n = 0; n <= N; n++) {
+          const u = ease(n / N);
+          let x = q(a.x, cx, b.x, u), y = q(a.y, cy, b.y, u);
+          if (kind === 'fish') { const w = 6 * k * Math.sin(2 * Math.PI * u) * Math.sin(Math.PI * u); x += -dy / dist * w; y += dx / dist * w; }
+          let ang = n ? Math.atan2(y - py, x - px) * 180 / Math.PI : Math.atan2(dy, dx) * 180 / Math.PI;
+          if (face < 0) ang -= 180; ang = ((ang + 540) % 360) - 180;
+          const rot = Math.max(-25, Math.min(25, ang * (kind === 'bird' ? 0.3 : 1)));
+          if (n || s === 0) push(x, y, rot, 1, t + dur * n / N);
+          px = x; py = y;
+        }
+        t += dur;
+        if (s < pts.length - 2) {                         // grab at target s+1
+          const tg = t; gulps.push({ i: b.i, t: tg });
+          push(b.x, b.y, 0, 1.15, tg + T.grab * 0.5); push(b.x, b.y, 0, 1, tg + T.grab);
+          frames.push([tg, tg + T.grab]); t += T.grab;
+        }
       }
-      t += dur;
-      if (s < pts.length - 2) {                         // grab at target s+1
-        const tg = t; gulps.push({ i: b.i, t: tg });
-        push(b.x, b.y, 0, 1.15, tg + T.grab * 0.5); push(b.x, b.y, 0, 1, tg + T.grab);
-        frames.push([tg, tg + T.grab]); t += T.grab;
-      }
+      total = t;
+      geo = { L, PT, size, mouth: [mx, my], targets: targets.map(o => ({ i: o.i, x: o.x, y: o.y })) };
+      layer.__geo = geo;                                  // for tests: grid-local targets and layer offset
+      return kf.map(f => ({ transform: f.transform, offset: f.time / total }));
     }
-    const total = t;
-    const anims = [];
-    anims.push(el.animate(kf.map(f => ({ transform: f.transform, offset: f.time / total })), { duration: total, fill: 'both' }));
+    const anims = [], kf0 = build();               // sets kf/frames/gulps/total (total depends only on T)
+    const move = el.animate(kf0, { duration: total, fill: 'both' });
+    anims.push(move);
+    // re-anchor on resize / orientation change mid-run (scrolling needs nothing: the layer scrolls with the grid)
+    let raf = 0;
+    const relayout = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; if (layer.isConnected) move.effect.setKeyframes(build()); }); };
+    const ro = window.ResizeObserver ? new ResizeObserver(relayout) : null; if (ro) ro.observe(grid);
+    addEventListener('resize', relayout);
+    const cleanup = () => { if (ro) ro.disconnect(); removeEventListener('resize', relayout); if (raf) cancelAnimationFrame(raf); layer.remove(); };
 
     // ---- frame swaps (step keyframes per frame group); bird shows .perch during grabs
     const sched = []; let n = 0;
@@ -97,6 +122,6 @@
       if (mark) anims.push(mark.animate([{ opacity: 0 }, { opacity: 1 }],
         { delay: tg + T.gulp, duration: 150, fill: 'both' }));       // hidden until gulped, then fades in
     });
-    return anims[0].finished.then(() => { layer.remove(); }, () => layer.remove()).then(() => total);
+    return anims[0].finished.then(cleanup, cleanup).then(() => total);
   };
 })();
