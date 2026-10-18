@@ -95,11 +95,11 @@
     const move = el.animate(kf0, { duration: total, fill: 'both' });
     anims.push(move);
     // re-anchor on resize / orientation change mid-run (scrolling needs nothing: the layer scrolls with the grid)
-    let raf = 0;
-    const relayout = () => { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; if (layer.isConnected) move.effect.setKeyframes(build()); }); };
+    // synchronous (ResizeObserver runs after layout, before paint) so the clip box never lags a frame behind the viewport
+    const relayout = () => { if (layer.isConnected) move.effect.setKeyframes(build()); };
     const ro = window.ResizeObserver ? new ResizeObserver(relayout) : null; if (ro) ro.observe(grid);
     addEventListener('resize', relayout);
-    const cleanup = () => { if (ro) ro.disconnect(); removeEventListener('resize', relayout); if (raf) cancelAnimationFrame(raf); layer.remove(); };
+    const cleanup = () => { if (ro) ro.disconnect(); removeEventListener('resize', relayout); layer.remove(); };
 
     // ---- frame swaps (step keyframes per frame group); bird shows .perch during grabs
     const sched = []; let n = 0;
