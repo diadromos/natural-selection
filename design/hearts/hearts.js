@@ -3,7 +3,7 @@
    in the top-right corner of its cell; shortly after each heart pops, a small cream egg appears over it.
    Overlays live inside each .org cell (inside #grid), like the stamps, so they scroll with the grid.
    Never touches creature colors: the heart and egg are separate elements with their own fixed fills.
-   Placeholder strings (final wording from Joseph Conrad): aria-label "Parent", aria-label "Egg". */
+   Final strings from Joseph Conrad: aria-label "Parent", aria-label "Egg". */
 (function(){
 const HEART={stagger:40,pop:320,eggDelay:380,eggPop:280,hold:600};
 const EGG_LAND=Math.round(HEART.eggPop*.6); // egg 'tok' when it lands: the 60% keyframe of eggPop (168 ms) -> 40k+548 ms (SOUND-NOTES.md)

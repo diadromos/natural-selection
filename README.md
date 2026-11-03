@@ -33,7 +33,7 @@ Extra controls:
 
 | Control | What it does |
 |---|---|
-| **Next generation** | Runs one generation. A red finch (a red perch on Squirts) flies or swims to each creature the predator eats, and a black skull stamp slams down on each one that dies at random. After about 6 to 7 seconds the survivors' children replace the grid; the controls are locked until then. With your system's reduced-motion setting on, there is no flight and no slam: the finch or perch marks and the skull stamps appear at once, and the children arrive after about 1.5 seconds. |
+| **Next generation** | Runs one generation. A red finch (a red perch on Squirts) flies or swims to each creature the predator eats, and a black skull stamp slams down on each one that dies at random. Then hearts mark the 16 surviving parents, eggs hatch, and the young (caterpillars, or baby squid on Squirts) crawl or swim to their cells and grow up in their inherited colors. After about 10 seconds the new generation fills the grid; the controls are locked until then. With your system's reduced-motion setting on, there is no flight and no slam: the finch or perch marks and the skull stamps appear at once, then all the hearts and eggs appear together. Nothing hatches or travels, and the new adults fade in after about 2 seconds in all. |
 | **N** (number box, default 10) | How many generations **Run N generations** runs. |
 | **Run N generations** | Runs N generations at once with no marks, then shows the result. |
 | **Sound on / Sound off** | Toggles sound for **Next generation**: bird chirps as the finch hunts (perch sounds on Squirts) and a thump as each skull stamp lands. Off by default, because browsers don't play audio until you click. Run N generations and reduced motion are always silent. |
