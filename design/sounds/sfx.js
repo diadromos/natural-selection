@@ -59,7 +59,7 @@
   window.addEventListener('pagehide', () => { away = true; goAway(); });
   window.addEventListener('pageshow', () => { away = false; comeBack(); });
   function play(log, name, ms, t0, vol, vary = true) {
-    const b = bufs[name]; if (!b) return;
+    const b = bufs[name] || bbufs[name]; if (!b) return;          // bbufs = breeding cues (below)
     const when = t0 + ms / 1000;
     if (when < ctx.currentTime - (ctx.outputLatency || ctx.baseLatency || 0) - LATE) return; // missed (e.g. still loading): skip
     const s = ctx.createBufferSource(), g = ctx.createGain();
@@ -97,14 +97,63 @@
       play(log, 'water-swoosh-b', exit, t0, VOL.swooshEnd);
     }
   }
+  // Breeding cues (Michael Winslow, design/sounds/breeding/SOUND-NOTES.md): breeding/<file>.ogg (.mp3 on Safari).
+  // Each cue rotates round-robin through <name> / <name>-2; with SFX.breedWater (set by squirts.html) heart, egg,
+  // hatch and grow use their -water / -water-2 versions. Loaded only once Sound is turned on; a missing or
+  // undecodable file is skipped silently. Throttled so a generation never becomes a cacophony: per cue at most one
+  // play every BREED_GAP ms (this matters most for grow), and at most BREED_CAP breeding plays in any 1 s window;
+  // extra calls are dropped (logged in SFX.lastBreed with skipped:true). Same silence rules as the predator sounds.
+  const BREED_NAMES = ['heart', 'egg', 'hatch', 'inch', 'swim', 'grow'];
+  const BREED_WATER = ['heart', 'egg', 'hatch', 'grow'];
+  const BREED_VOL = { heart: 0.3, egg: 0.35, hatch: 0.25, inch: 0.3, swim: 0.4, grow: 0.25 };   // Michael's suggested volumes
+  const BREED_GAP = 180, BREED_CAP = 8;
+  const BREED_FILES = [].concat(...BREED_NAMES.map(n => [n, n + '-2']), ...BREED_WATER.map(n => [n + '-water', n + '-water-2']));
+  const bbufs = {}; let bloading = null; const lastAt = {}, rrb = {}; let recent = [];
+  function loadBreed() {
+    if (bloading) return bloading;
+    const e = ext();
+    bloading = Promise.all(BREED_FILES.map(n => fetch(BASE + 'breeding/' + n + '.' + e)
+      .then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); })
+      .then(a => new Promise((res, rej) => ctx.decodeAudioData(a, res, rej))).then(b => { bbufs[n] = b; })
+      .catch(() => {})));
+    return bloading;
+  }
+  function breedFile(name) {
+    const base = window.SFX.breedWater && BREED_WATER.indexOf(name) >= 0 ? name + '-water' : name;
+    const alt = (rrb[name] = (rrb[name] || 0) + 1) % 2 === 0 ? base + '-2' : base;
+    return bbufs[alt] ? alt : bbufs[base] ? base : bbufs[name] ? name : null;   // fall back to the base cue
+  }
+  function breedPlay(name, delay, vol) {
+    const log = window.SFX.lastBreed = window.SFX.lastBreed || [];
+    if (!on || !ctx || isAway() || reduced() || BREED_NAMES.indexOf(name) < 0) return false;
+    const at = performance.now() + (delay || 0);
+    recent = recent.filter(t => t > at - 1000);
+    if ((lastAt[name] !== undefined && Math.abs(at - lastAt[name]) < BREED_GAP) || recent.length >= BREED_CAP) { log.push({ name, at, skipped: true }); return false; }
+    lastAt[name] = at; recent.push(at);
+    const ep = epoch, perf0 = performance.now();
+    const go = () => {
+      if (!on || isAway() || ep !== epoch) return;
+      const file = breedFile(name); if (!file) return;                             // missing file -> silent
+      const lat = ctx.outputLatency || ctx.baseLatency || 0;
+      const t0 = ctx.currentTime - lat - (performance.now() - perf0) / 1000;      // context time of the call
+      play(log, file, delay || 0, t0, vol !== undefined ? vol : BREED_VOL[name]);  // play()'s usual +-4% pitch variation
+    };
+    if (ctx.state === 'running' && bloading) bloading.then(go); else Promise.all([ctx.state === 'running' ? 0 : ctx.resume(), loadBreed()]).then(go);
+    return true;
+  }
   window.SFX = {
+    breedNames: BREED_NAMES,
+    breedWater: false,                           // squirts.html sets true -> -water variants of heart/egg/hatch/grow
+    lastBreed: null,
+    // SFX.play('heart'|'egg'|'hatch'|'inch'|'swim'|'grow', {delay: ms from now, vol}) -> true if queued, false if muted/throttled
+    play(name, opt) { opt = opt || {}; return breedPlay(name, opt.delay, opt.vol); },
     waterStamp: true,                            // muffled stamp-thump-water on squirts.html (John: underwater sounds)
     lastRun: null,
     get enabled() { return on; },
     get context() { return ctx; },
     setEnabled(v) {
       on = !!v; try { localStorage.setItem('ns-sfx', on ? '1' : '0'); } catch (e) {}
-      if (on) return unlock();
+      if (on) { const u = unlock(); loadBreed(); return u; }
       epoch++; if (ctx) { stopAll(); ctx.suspend(); } return Promise.resolve();
     },
     // kind: 'bird' | 'fish'; nEaten = eaten.length; nStamps = randomIdx.length; STAMP = the page's STAMP const
