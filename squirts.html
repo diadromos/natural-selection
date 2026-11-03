@@ -27,7 +27,7 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
 <p style="font-size:13px;color:#aaa">Each generation, a predator fish eats the 8 most visible squirts (red perch), 8 more die at random (black skull stamp), and the 16 survivors pair up. Each child gets the hue of one parent and the value (brightness/saturation) of the other.</p>
 <p class="nav"><a href="index.html" title="Go to the Color version: butterflies in full color.">Color</a><a href="mono.html" title="Go to the Monochrome version: gray moths with 32-bit genes.">Mono</a><a href="spots.html" title="Go to the Spots version: white moths with gray spots.">Spots</a><a href="squirts.html" class="active" aria-current="page">Squirts</a></p>
-<script src="design/predator-anim/predator-svgs.js"></script><script src="design/predator-anim/predator-anim.js"></script><script src="design/stamp/stamp-svgs.js"></script><script src="design/stamp-anim/stamp.js"></script><script src="design/sounds/sfx.js"></script><script src="design/hearts/hearts.js"></script><script>if(window.SFX)SFX.breedWater=true; // -water variants of the breeding cues (design/sounds/breeding/SOUND-NOTES.md)</script>
+<script src="design/predator-anim/predator-svgs.js"></script><script src="design/predator-anim/predator-anim.js"></script><script src="design/stamp/stamp-svgs.js"></script><script src="design/stamp-anim/stamp.js"></script><script src="design/sounds/sfx.js"></script><script src="design/hearts/hearts.js"></script><script src="design/hatch/baby-svgs.js"></script><script src="design/hatch/hatch.js"></script><script>if(window.SFX)SFX.breedWater=true; // -water variants of the breeding cues (design/sounds/breeding/SOUND-NOTES.md)</script>
 <script>
 const N=32,Q=N/4;let bg,pop,gen;
 const rnd=()=>Math.floor(Math.random()*0x1000000);
@@ -53,9 +53,10 @@ function render(marks={}){lastMarks=marks;const g=document.getElementById('grid'
 function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b],bg)-dist(pop[a],bg));
  const eaten=idx.slice(0,Q),rest=shuffle(idx.slice(Q)),killed=rest.slice(0,Q),surv=rest.slice(Q);
  const marks={};eaten.forEach(i=>marks[i]='eaten');killed.forEach(i=>marks[i]='random');
- const s=shuffle(surv.map(i=>pop[i])),next=[];
+ // bookkeeping only: shuffle survivor indices instead of their genes (same RNG draws, same pairing) so the hatch step knows each pair's cells
+ const si=shuffle(surv.slice()),s=si.map(i=>pop[i]),next=[];
  for(let k=0;k<s.length;k+=2){const a=s[k],b=s[k+1];next.push(child(a,b),child(b,a),child(a,b),child(b,a))}
- return{marks,next}}
+ return{marks,next,pairs:si}}
 // Animated kill step (design/predator-anim/MOTION-SPEC.md). Selection/breeding unchanged; only timing+visuals.
 const STEP_PAUSE=800,STEP_STATIC=1500;let stepBusy=false;
 // Random-death rubber stamps (design/stamp-anim/stamp.js; timing from design/stamp/STAMP-SPEC.md). ms / px / deg.
@@ -63,7 +64,7 @@ const STEP_PAUSE=800,STEP_STATIC=1500;let stepBusy=false;
 const STAMP={start:150,gap:600,drop:240,squash:80,settle:160,scale:1.8,lift:18,tilt:12,offset:4,shake:1.5,spread:true,dropEase:'cubic-bezier(.55,0,1,.45)'};
 function lockUI(on){['step','multi','reset','bgs','rbg','hue','val'].forEach(id=>{const e=document.getElementById(id);if(e)e.disabled=on})}
 async function step(){if(stepBusy)return;stepBusy=true;lockUI(true);
- const{marks,next}=generation();render(marks);
+ const{marks,next,pairs}=generation();render(marks);
  const eaten=Object.keys(marks).filter(i=>marks[i]=='eaten').map(Number),rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
  const randomIdx=Object.keys(marks).filter(i=>marks[i]=='random').map(Number);
  if(window.SFX)SFX.scheduleRun('fish',eaten.length,randomIdx.length,STAMP); // sounds on the same clock as the animations (design/sounds/SOUND-NOTES.md)
@@ -73,7 +74,12 @@ async function step(){if(stepBusy)return;stepBusy=true;lockUI(true);
  // Breeding hearts (design/hearts/hearts.js): every survivor (no mark) is a parent in generation()'s pairing loop, so each gets a heart, then an egg.
  const breeders=[...pop.keys()].filter(i=>!marks[i]);
  if(window.breedMarks){try{await breedMarks(document.getElementById('grid'),breeders,{reduced:rm})}catch(e){console.error(e)}}
- setTimeout(()=>{pop=shuffle(next);gen++;render();if(window.SFX&&SFX.play)SFX.play('hatch');stepBusy=false;lockUI(false)},rm?STEP_STATIC:(window.BREED_HEART?BREED_HEART.hold:STEP_PAUSE))}
+ // Hatch (design/hatch/hatch.js): eggs crack, each child's baby travels from one parent of its pair to the child's new cell and grows into the adult.
+ // order = the same shuffle as pop=shuffle(next) (one draw per element), kept as indices so each child's cell is known; pop ends up identical.
+ const order=shuffle([...next.keys()]),commit=()=>{pop=order.map(j=>next[j]);gen++;render()};
+ if(window.hatchPhase){try{await hatchPhase(document.getElementById('grid'),{order,pairs,next,kind:'squid',tint:c=>({body:hex(c)}),reduced:rm,hold:rm?STEP_STATIC:undefined,commit})}catch(e){console.error(e)}}
+ else await new Promise(r=>setTimeout(()=>{commit();r()},rm?STEP_STATIC:STEP_PAUSE));
+ stepBusy=false;lockUI(false)}
 function multi(){const n=+document.getElementById('n').value||1;for(let i=0;i<n;i++){pop=shuffle(generation().next);gen++}render()}
 document.getElementById('step').onclick=step;document.getElementById('multi').onclick=multi;document.getElementById('reset').onclick=reset;
 const snd=document.getElementById('sound');snd.onclick=()=>{const on=snd.getAttribute('aria-pressed')!=='true';snd.setAttribute('aria-pressed',String(on));snd.textContent=on?'Sound on':'Sound off';if(window.SFX)SFX.setEnabled(on)};

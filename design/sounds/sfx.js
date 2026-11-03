@@ -127,8 +127,9 @@
     const log = window.SFX.lastBreed = window.SFX.lastBreed || [];
     if (!on || !ctx || isAway() || reduced() || BREED_NAMES.indexOf(name) < 0) return false;
     const at = performance.now() + (delay || 0);
-    recent = recent.filter(t => t > at - 1000);
-    if ((lastAt[name] !== undefined && Math.abs(at - lastAt[name]) < BREED_GAP) || recent.length >= BREED_CAP) { log.push({ name, at, skipped: true }); return false; }
+    recent = recent.filter(t => t > at - 2000);                       // prune; the cap counts only plays in the 1 s BEFORE this one
+    const inWindow = recent.filter(t => t > at - 1000 && t <= at).length;  // (callers issue cues sorted by time, see hatch.js)
+    if ((lastAt[name] !== undefined && Math.abs(at - lastAt[name]) < BREED_GAP) || inWindow >= BREED_CAP) { log.push({ name, at, skipped: true }); return false; }
     lastAt[name] = at; recent.push(at);
     const ep = epoch, perf0 = performance.now();
     const go = () => {

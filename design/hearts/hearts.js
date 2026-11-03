@@ -29,7 +29,7 @@ window.breedMarks=function(grid,idx,opt){opt=opt||{};const rm=!!opt.reduced,cell
   b.innerHTML=heartSVG+`<span class="egg" role="img" aria-label="${STR.egg}">${eggSVG}</span>`;c.appendChild(b)});
  // Sounds (design/sounds/sfx.js; off unless #sound is on; silent under reduced motion): one call per heart and per egg,
  // throttled inside SFX.play (one per cue every 180 ms, max 8 breeding cues per second), so 16 parents give ~4 hearts + ~4 eggs.
- if(!rm&&window.SFX&&SFX.play){window.SFX.lastBreed=[];idx.forEach((i,k)=>{SFX.play('heart',{delay:k*HEART.stagger});SFX.play('egg',{delay:k*HEART.stagger+HEART.eggDelay+EGG_LAND})})}
+ if(!rm&&window.SFX&&SFX.play){window.SFX.lastBreed=[];const q=[];idx.forEach((i,k)=>{q.push(['heart',k*HEART.stagger],['egg',k*HEART.stagger+HEART.eggDelay+EGG_LAND])});q.sort((x,y)=>x[1]-y[1]).forEach(([n,d])=>SFX.play(n,{delay:d}))}
  const total=rm||!idx.length?0:(idx.length-1)*HEART.stagger+HEART.eggDelay+HEART.eggPop;
  return new Promise(r=>setTimeout(r,total))};
 window.BREED_HEART=HEART;window.BREED_STRINGS=STR;
