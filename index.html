@@ -8,6 +8,7 @@ body{font-family:system-ui,sans-serif;background:#222;color:#eee;display:flex;fl
 
 button,input{font-size:15px;margin:4px;padding:6px 12px}
 #stats{font-family:monospace;margin-top:8px;text-align:center}
+#generation{font:800 28px/1.15 system-ui,sans-serif;margin:8px 0 4px;text-align:center;letter-spacing:-.01em}
 </style>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="design/mobile.css"></head><body>
@@ -22,6 +23,7 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <button id="sound" type="button" aria-pressed="false" title="Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.">Sound off</button>
 </div>
 <div id="bglabel" title="The background color as #RRGGBB. Each creature&#x27;s color is measured against it."></div>
+<div id="generation" aria-live="polite" aria-atomic="true">Generation: 0</div>
 <div id="grid"></div>
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
 <p style="font-size:13px;color:#aaa">Each generation, a predator bird eats the 8 most visible organisms (red finch), 8 more die at random (black skull stamp), and the 16 survivors pair up. Each child gets the hue of one parent and the value (brightness/saturation) of the other.</p>
@@ -48,7 +50,7 @@ function lblColor(h){const L=[1,3,5].map(i=>{const c=parseInt(h.substr(i,2),16)/
 function render(marks={}){const g=document.getElementById('grid');document.getElementById('bglabel').textContent='Background: '+hex(bg);g.style.background=hex(bg);g.style.color=lblColor(hex(bg));g.innerHTML='';
  pop.forEach((c,i)=>{const d=document.createElement('div');d.className='org '+(marks[i]||'');d.title="A butterfly and how closely it matches the background, from 0 to 100%. The least hidden are eaten; a child takes the hue of one parent and the saturation and value of the other.";const f=hex(c);d.innerHTML=`<svg viewBox='0 0 100 80'><g fill='${f}' stroke='#0005' stroke-width='1.5'><path d='M50 39 C36 -6,-6 -4,2 26 C5 44,30 48,50 41Z'/><path d='M50 39 C64 -6,106 -4,98 26 C95 44,70 48,50 41Z'/><path d='M50 41 C28 38,2 52,12 70 C22 86,46 70,50 45Z'/><path d='M50 41 C72 38,98 52,88 70 C78 86,54 70,50 45Z'/></g><ellipse cx='50' cy='42' rx='3' ry='18' fill='#333'/><path d='M49 25 Q44 10 38 6 M51 25 Q56 10 62 6' stroke='#333' stroke-width='1.5' fill='none'/></svg><span>${(100*(1-(dist(c,bg)/(255*Math.sqrt(3))))).toFixed(1)}%</span>`+(marks[i]=='eaten'?`<div class='mark'><svg viewBox='0 0 80 80' width='80' height='80'><g fill='none' stroke='#000' stroke-opacity='.55' stroke-width='6.5' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='3.6' fill='#000' fill-opacity='.55' stroke='none'/></g><g fill='none' stroke='#e00' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='2' fill='#e00' stroke='none'/></g></svg></div>`:marks[i]=='random'?stampMark(i):'');g.appendChild(d)});
  const avg=pop.reduce((s,c)=>s+dist(c,bg),0)/N;
- document.getElementById('stats').innerHTML=`Generation ${gen} | Avg distance from background: ${avg.toFixed(1)}`}
+ document.getElementById('stats').innerHTML=`Generation ${gen} | Avg distance from background: ${avg.toFixed(1)}`;document.getElementById('generation').textContent='Generation: '+gen}
 function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b],bg)-dist(pop[a],bg));
  const eaten=idx.slice(0,Q),rest=shuffle(idx.slice(Q)),killed=rest.slice(0,Q),surv=rest.slice(Q);
  const marks={};eaten.forEach(i=>marks[i]='eaten');killed.forEach(i=>marks[i]='random');

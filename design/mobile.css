@@ -66,6 +66,9 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 /* bg label: layout/type only (no color) */
 #bglabel{font:800 15px/1.2 ui-monospace,Menlo,monospace!important;margin:6px 4px!important;letter-spacing:.02em;opacity:.9}
 
+/* visible generation counter (aria-live polite). Layout/type only. */
+#generation{font:800 28px/1.15 var(--font)!important;margin:8px 4px 8px!important;letter-spacing:-.01em;text-align:center;color:var(--ink)}
+
 /* grid: layout only, 4 columns. background/color come from JS inline style. */
 #grid{grid-template-columns:repeat(4,1fr)!important;gap:6px!important;padding:10px!important;margin:4px 0 10px!important;
   border-radius:24px!important;box-shadow:var(--shadow)}
@@ -102,7 +105,7 @@ body>p:not(:has(a)){max-width:none!important;font-size:14px!important;line-heigh
   body{display:grid!important;max-width:1400px!important;margin:0 auto!important;
     padding:0 28px 28px!important;column-gap:24px;row-gap:12px;
     grid-template-columns:minmax(300px,340px) minmax(0,1fr);
-    grid-template-rows:auto repeat(5,auto) 1fr auto;align-content:start;align-items:start}
+    grid-template-rows:auto repeat(6,auto) 1fr auto;align-content:start;align-items:start}
   /* header bar: title only (nav lives in the footer) */
   body::before{content:"";grid-column:1/-1;grid-row:1;align-self:stretch;margin:0 -28px;
     background:rgba(32,35,42,.92);border-bottom:1px solid #343844;
@@ -124,7 +127,7 @@ body>p:not(:has(a)){max-width:none!important;font-size:14px!important;line-heigh
   p.nav a[aria-current='page']::after,.nav a.active::after{bottom:5px}
 
   /* side column */
-  body>div:not([id]),.controls,#bglabel,#stats,body>p:not(:has(a)){grid-column:1;margin:0!important}
+  body>div:not([id]),.controls,#bglabel,#generation,#stats,body>p:not(:has(a)){grid-column:1;margin:0!important}
   body>div:not([id]),.controls{padding:16px;gap:10px}
   #bglabel{padding:2px 4px}
   body>p:not(:has(a)){font-size:13px!important}

@@ -11,6 +11,7 @@ body #grid .mark svg{max-height:none} /* mobile.css caps .org svg at 78% of the 
 
 button,input{font-size:15px;margin:4px;padding:6px 12px}
 #stats{font-family:monospace;margin-top:8px;text-align:center}
+#generation{font:800 28px/1.15 system-ui,sans-serif;margin:8px 0 4px;text-align:center;letter-spacing:-.01em}
 </style>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="stylesheet" href="design/mobile.css"></head><body>
@@ -25,6 +26,7 @@ button,input{font-size:15px;margin:4px;padding:6px 12px}
 <button id="sound" type="button" aria-pressed="false" title="Turn sound on or off. When on, Next generation plays bird chirps as the finch hunts and a thump as each skull stamp lands. It is off until you click it, and Run N generations and reduced motion stay silent.">Sound off</button><br><label>Background gray <input type="range" id="bgs" title="Set the background gray from 0 (black) to 255 (white). It changes right away, without a reset." min="0" max="255"></label> <button id="rbg" title="Pick a new random gray background without resetting the population.">Random background</button>
 </div>
 <div id="bglabel" title="The background gene as a 32-bit number in hex, drawn as gray. Use the slider to change it."></div>
+<div id="generation" aria-live="polite" aria-atomic="true">Generation: 0</div>
 <div id="grid"></div>
 <div id="stats" title="The generation count and the population&#x27;s average distance from the background. Lower means better camouflage."></div>
 <p style="font-size:13px;color:#aaa">White moths carry two genes: a spot shade (32-bit base gray; each spot varies around it by an offset set by the pattern gene) and a spot pattern (32-bit seed for spot count, sizes and positions; each spot center is redrawn until it lands on the moth). The predator eats the 8 whose area-weighted average gray, over wings and body, differs most from the background; 8 more die at random; each child takes the shade of one parent and the pattern of the other. Change the background any time with the slider.</p>
@@ -73,7 +75,7 @@ function render(marks={}){lastMarks=marks;const g=document.getElementById('grid'
  const sp=S.map(s=>{const v=spotGray(o,s).toString(16).padStart(2,'0'),f='#'+v+v+v;return `<g fill='${f}'><circle cx='${s.x.toFixed(1)}' cy='${s.y.toFixed(1)}' r='${s.r.toFixed(1)}'/><circle cx='${(100-s.x).toFixed(1)}' cy='${s.y.toFixed(1)}' r='${s.r.toFixed(1)}'/></g>`}).join('');
  d.innerHTML=`<svg viewBox='0 15 100 49'>${MOTH_FIXED}<defs><clipPath id='w${i}'>${WP}</clipPath></defs><g fill='#fff'>${WP}</g><g clip-path='url(#w${i})'>${sp}</g><g fill='none' stroke='#0005' stroke-width='1.5' stroke-linejoin='round'>${WP}${MOTH_SEGS}</g></svg><span>${(100*(1-(dist(o)/255))).toFixed(1)}%</span>`+(marks[i]=='eaten'?`<div class='mark'><svg viewBox='0 0 80 80' width='80' height='80'><g fill='none' stroke='#000' stroke-opacity='.55' stroke-width='6.5' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='3.6' fill='#000' fill-opacity='.55' stroke='none'/></g><g fill='none' stroke='#e00' stroke-width='3' stroke-linejoin='round' stroke-linecap='round'><path d='M62 22 C58 13 46 13 43 22 C38 30 29 36 21 45 L7 54 L13 57 L8 63 L24 56 C33 62 49 61 57 50 C61 44 63 39 63 35 M62 22 L74 29 L63 35 M64 28.8 L71 29.2 M45 31 C37 34 29 42 25 51 C35 50 44 45 49 38 M38 60 L36 69 M46 58 L46 69 M28 70 L56 70'/><circle cx='53.5' cy='25' r='2' fill='#e00' stroke='none'/></g></svg></div>`:marks[i]=='random'?stampMark(i):'');g.appendChild(d)});
  const avg=pop.reduce((s,o)=>s+dist(o),0)/N;
- document.getElementById('stats').innerHTML=`Generation ${gen} | Avg distance from background: ${avg.toFixed(1)} / 255 (${(avg/2.55).toFixed(1)}%)`}
+ document.getElementById('stats').innerHTML=`Generation ${gen} | Avg distance from background: ${avg.toFixed(1)} / 255 (${(avg/2.55).toFixed(1)}%)`;document.getElementById('generation').textContent='Generation: '+gen}
 function generation(){let idx=[...pop.keys()].sort((a,b)=>dist(pop[b])-dist(pop[a]));
  const eaten=idx.slice(0,Q),rest=shuffle(idx.slice(Q)),killed=rest.slice(0,Q),surv=rest.slice(Q);
  const marks={};eaten.forEach(i=>marks[i]='eaten');killed.forEach(i=>marks[i]='random');
